@@ -1,0 +1,32 @@
+
+#qrcheckin-participant-name {
+  font-size: xx-large;
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+}
+
+#qrcheckin-event-name {
+  padding-top: 10px;
+  font-size: large;
+}
+
+#qrcheckin-status-line {
+  font-size: large;
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+}
+
+.qrcheckin-status-attended {
+  color: green;
+}
+
+.qrcheckin-status-registered {
+  color: orange;
+}
+
+.qrcheckin-status-other {
+  color: red;
+}
+

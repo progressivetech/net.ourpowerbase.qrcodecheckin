@@ -1,0 +1,109 @@
+[
+    {
+        "name": "chillerlan/php-traits",
+        "version": "1.1.12",
+        "version_normalized": "1.1.12.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/chillerlan/php-traits.git",
+            "reference": "02560c0e8164f35d106770e098984671eb3d2623"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/chillerlan/php-traits/zipball/02560c0e8164f35d106770e098984671eb3d2623",
+            "reference": "02560c0e8164f35d106770e098984671eb3d2623",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=7.0.3"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "^6.5"
+        },
+        "time": "2018-04-22T16:49:25+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "chillerlan\\Traits\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Smiley",
+                "email": "smiley@chillerlan.net",
+                "homepage": "https://github.com/codemasher"
+            }
+        ],
+        "description": "Some useful traits for PHP 7+",
+        "homepage": "https://github.com/chillerlan/php-traits",
+        "keywords": [
+            "PHP7",
+            "container",
+            "dotenv",
+            "helper",
+            "trait"
+        ]
+    },
+    {
+        "name": "chillerlan/php-qrcode",
+        "version": "2.0.6",
+        "version_normalized": "2.0.6.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/chillerlan/php-qrcode.git",
+            "reference": "45577426ab8e2199aa60e00f9bd7c242c1484c97"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/chillerlan/php-qrcode/zipball/45577426ab8e2199aa60e00f9bd7c242c1484c97",
+            "reference": "45577426ab8e2199aa60e00f9bd7c242c1484c97",
+            "shasum": ""
+        },
+        "require": {
+            "chillerlan/php-traits": "^1.1",
+            "php": ">=7.0.3"
+        },
+        "require-dev": {
+            "chillerlan/php-authenticator": "^2.0",
+            "phpunit/phpunit": "^6.5"
+        },
+        "time": "2018-03-28T18:07:10+00:00",
+        "type": "library",
+        "extra": {
+            "branch-alias": {
+                "dev-v2.0.x-php5": "1.0.8-dev"
+            }
+        },
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "chillerlan\\QRCode\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Kazuhiko Arase",
+                "homepage": "https://github.com/kazuhikoarase"
+            },
+            {
+                "name": "Smiley",
+                "email": "smiley@chillerlan.net",
+                "homepage": "https://github.com/codemasher"
+            }
+        ],
+        "description": "A QR code generator. PHP 7+",
+        "homepage": "https://github.com/chillerlan/php-qrcode",
+        "keywords": [
+            "qr code"
+        ]
+    }
+]

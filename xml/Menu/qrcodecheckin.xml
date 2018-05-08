@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<menu>
+  <item>
+    <path>civicrm/qrcodecheckin</path>
+    <page_callback>CRM_Qrcodecheckin_Page_QrcodecheckinLanding</page_callback>
+    <title>QrcodecheckinLanding</title>
+    <access_arguments>check-in participants via qrcode</access_arguments>
+  </item>
+</menu>

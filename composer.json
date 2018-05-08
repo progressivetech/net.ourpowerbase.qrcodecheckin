@@ -1,0 +1,6 @@
+{
+	"require": {
+		"php": ">=7.0.3",
+		"chillerlan/php-qrcode": "v2.0.6"
+	}
+}
