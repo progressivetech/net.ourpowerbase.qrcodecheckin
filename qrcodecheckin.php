@@ -55,13 +55,7 @@ function qrcodecheckin_civicrm_uninstall() {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_enable
  */
 function qrcodecheckin_civicrm_enable() {
-  // Ensure directory for qr codes is available.
-  $civiConfig = CRM_Core_Config::singleton();
-  if (!file_exists($civiConfig->imageUploadDir . '/qrcodecheckin/')) {
-    mkdir($civiConfig->imageUploadDir . '/qrcodecheckin/');
-  }
-
-  _qrcodecheckin_civix_civicrm_enable();
+   _qrcodecheckin_civix_civicrm_enable();
 }
 
 /**
@@ -181,19 +175,14 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
     if (CRM_Utils_Request::retrieve('snippet', 'String', $this) == 'json') {
       $templatePath = realpath(dirname(__FILE__)."/templates");
       // Add the field element in the form
-      $form->add('checkbox', 'enable_qrcode_checkin', ts('Enable QR Code checkin for this event'));
-      $form->add('checkbox', 'default_qrcode_checkin_event', ts('When generating tokens, use this Event'));
+      $form->add('checkbox', 'default_qrcode_checkin_event', ts('When generating QR Code tokens, use this Event'));
       // dynamically insert a template block in the page
       CRM_Core_Region::instance('page-body')->add(array(
         'template' => "{$templatePath}/qrcode-checkin-event-options.tpl"
       ));
 
       $default_event_setting = civicrm_api3('Setting', 'getvalue', array('name' => 'default_qrcode_checkin_event'));
-      $enabled_events_setting = civicrm_api3('Setting', 'getvalue', array('name' => 'enabled_qrcode_checkin_events'));
       $event_id = intval($form->getVar('_id'));
-      if (in_array($event_id, $enabled_events_setting)) {
-        $defaults['enable_qrcode_checkin'] = 1;
-      }
       if ($default_event_setting == $event_id) {
         $defaults['default_qrcode_checkin_event'] = 1;
       }
@@ -212,7 +201,6 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
   if ($formName == 'CRM_Event_Form_ManageEvent_EventInfo') {
     $vals = $form->_submitValues;
     $event_id = intval($form->getVar('_id'));
-    $enable_qrcode_checkin = array_key_exists('enable_qrcode_checkin', $vals) ? TRUE : FALSE;
     $default_qrcode_checkin_event = array_key_exists('default_qrcode_checkin_event', $vals) ? TRUE : FALSE;
 
     // Handle Default setting.
@@ -228,53 +216,9 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
         civicrm_api3('Setting', 'create', array('default_qrcode_checkin_event' => NULL));
       }
     }
-    
-    // Handle Enabled.
-    $enabled_events_setting = civicrm_api3('Setting', 'getvalue', array('name' => 'enabled_qrcode_checkin_events'));
-    if ($enable_qrcode_checkin) {
-      if (!in_array($event_id, $enabled_events_setting)) {
-        $enabled_events_setting[] = $event_id;
-        civicrm_api3('Setting', 'create', array('enabled_qrcode_checkin_events' => $enabled_events_setting));
-      }
-    }
-    else {
-      if (in_array($event_id, $enabled_events_setting)) {
-        $key = array_search($event_id, $enabled_events_setting);
-        if ($key !== FALSE) {
-          unset($enabled_events_setting[$key]);
-          civicrm_api3('Setting', 'create', array('enabled_qrcode_checkin_events' => $enabled_events_setting));
-        }
-      }
-    }
-
   }
 }
 
-/**
- * Implements hook_civicrm_post().
- *
- * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_post/
- */
-function qrcodecheckin_civicrm_post($op, $objectName, $objectId, &$objectRef) {
-  $delete_ops = array('delete', 'trash');
-  $create_ops = array('create', 'edit', 'restore');
-
-  if ($objectName == 'Participant') {
-    $enabled_events_setting = civicrm_api3('Setting', 'getvalue', array('name' => 'enabled_qrcode_checkin_events'));
-    if (in_array($objectRef->event_id, $enabled_events_setting)) {
-      $participant_id = $objectId;
-      if (in_array($op, $create_ops)) {
-        // Ensure the qrcode image file is created.
-        $code = qrcodecheckin_get_code($participant_id);
-        qrcodecheckin_create_image($code, $participant_id);
-      }
-      elseif (in_array($op, $delete_ops)) {
-        $code = qrcodecheckin_get_code($participant_id);
-        qrcodecheckin_delete_image($code);
-      }
-    }
-  }
-}
 
 /**
  * Create a hash based on the participant id.
@@ -289,21 +233,6 @@ function qrcodecheckin_get_code($participant_id) {
   $dao->fetch();
   $user_hash = $dao->hash;
   return hash('sha256', $participant_id + $user_hash + CIVICRM_SITE_KEY);
-}
-
-/**
- * Create the qr image file
- */
-function qrcodecheckin_create_image($code, $participant_id) {
-  $path = qrcodecheckin_get_path($code); 
-  if (!file_exists($path)) {
-    // Since we are saving a file, we don't want base64 data.
-    $url = qrcodecheckin_get_url($code, $participant_id);
-    $base64 = FALSE;
-    $data = qrcodecheckin_get_image_data($url, $base64);
-    file_put_contents($path, $data);
-    dpm("Url: $url");
-  }
 }
 
 /**
@@ -338,16 +267,6 @@ function qrcodecheckin_get_path($code) {
 }
 
 /**
- * Delete qrcode image if it exists.
- */
-function qrcodecheckin_delete_image($code) {
-  $path = qrcodecheckin_get_path($code);
-  if (file_exists($path)) {
-    unlink($path);
-  }
-}
-
-/**
  * Implements hook_civicrm_permission(&$permissions)
  */
 function qrcodecheckin_civicrm_permission(&$permissions) {
@@ -364,8 +283,6 @@ function qrcodecheckin_civicrm_permission(&$permissions) {
 function qrcodecheckin_civicrm_tokens(&$tokens) {
   $tokens['qrcodecheckin'] = array(
     'qrcodecheckin.qrcode_img' => ts("HTML image tag with qrcode embedded in it."),
-    'qrcodecheckin.qrcode_url' => ts("URL to the qrcode image file (useful for text version of email)."),
-    'qrcodecheckin.qrcode_html' => ts("Block of HTML code with both image and link"),
   );
 }
 
@@ -379,16 +296,11 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
       $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id);
       if ($participant_id) {
         $code = qrcodecheckin_get_code($participant_id);
-        // First ensure the image file is created.
-        qrcodecheckin_create_image($code, $participant_id);
         // Now, get the data for an embedded image.
         $url = qrcodecheckin_get_url($code, $participant_id);
         $base64 = TRUE;
         $data = qrcodecheckin_get_image_data($url, $base64);
-        $img = '<img src="' . $data . '">';
-        $values[$contact_id]['qrcodecheckin.qrcode_img'] = $img;
-        $values[$contact_id]['qrcodecheckin.qrcode_link'] = $url;;
-        $values[$contact_id]['qrcodecheckin.qrcode_html'] = '<div>' . $img . '</div><div>Trouble reading your QR Code? Trying accessing it <a href="' . $url . '">directly</a></div>';
+        $values[$contact_id]['qrcodecheckin.qrcode_img'] = '<img src="' . $data . '">';
       }
     }
   }

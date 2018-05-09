@@ -1,12 +1,4 @@
 <table>
-  <tr id="enable-qrcode-checkin-tr">
-    <td>&nbsp;</td>
-    <td>
-      {$form.enable_qrcode_checkin.html}
-      {$form.enable_qrcode_checkin.label}
-      <div class="description">{ts}If enabled, everytime a contact registers, a QR Code image will be created for them. You can send them their QR Checkin Code via the QR Checkin Code email token.{/ts}</div>
-    </td>
-  </tr>
   <tr id="default-qrcode-checkin-event-tr">
     <td>&nbsp;</td>
     <td>
@@ -20,7 +12,6 @@
 {* reposition the above block after #someOtherBlock *}
 <script type="text/javascript">
   console.log("Hi new?");
-    CRM.$('tr#enable-qrcode-checkin-tr').insertAfter('tr.crm-event-manage-eventinfo-form-block-is_active');
-    CRM.$('tr#default-qrcode-checkin-event-tr').insertAfter('tr#enable-qrcode-checkin-tr')
+    CRM.$('tr#default-qrcode-checkin-event-tr').insertAfter('tr.crm-event-manage-eventinfo-form-block-is_active');
 </script>
 
