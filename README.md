@@ -1,15 +1,24 @@
-# net.ourpowerbase.qrcodecheckin
+# QR Code Checkin
 
 ![Screenshot](/images/screenshot.png)
 
-(*FIXME: In one or two paragraphs, describe what the extension does and why one would download it. *)
+QRCode Checkin allows you to send an email that contains a scanable code to the registered participants for your event.
+
+Your registration workers can use any freely available QR Code scanning software on their phones to scan the code and open the encoded web address on their browser.
+
+When they do, they will get the status information about the registration, for example:
+
+
+![Registered attendee with button to update status](/images/qrcode-checkin-registered.png)
+
+With one click, the registration worker can change their status from registered to attended.
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 ## Requirements
 
 * PHP v5.4+
-* CiviCRM (*FIXME: Version number*)
+* CiviCRM 4.7 
 
 ## Installation (Web UI)
 
@@ -37,8 +46,49 @@ cv en qrcodecheckin
 
 ## Usage
 
-(* FIXME: Where would a new user navigate to get started? What changes would they see? *)
+Once enabled, each event configuration screen will have a new checkbox:
+
+![Checkbox to enable QR Code checkin for this event](/images/qrcode-event-configuration.png)
+
+This setting can only be set on one event at a time.
+
+After setting the checkbox for your event, search for all contacts that are registered for the event and place them in a group.
+
+Then, send an email to the group, that includes the qrcodecheckin.qrcodecheckin_img token:
+
+![Same email that include QR Code checkin token](/images/qrcode-compose-email.png)
+
+Recipients will get an email that includes the QR Code as an embedded image:
+
+![User's view of the QR Code in their email](/images/qrcode-view-email.png)
+
+Now onto the event... At the event, be sure to have all registration workers download a QR Code scanner to their phones (there are plenty of free scanners available for [android](https://play.google.com/store/apps/details?id=me.scan.android.client&hl=en) and on the iPhone it is built into the camera - so no extra software necessary).
+
+Next, the registration worker should login to CiviCRM on their phones.
+
+Since registration workers are often volunteers who should not have full access to your CiviCRM installation, you can create a role for them that must minimally have the following permissions:
+
+ * administer CiviCRM (yes, this is a big one, but without additional permissions there is not a lot they can do with it)
+ * access AJAX API
+ * check-in participants via qrcode (this permission is provided by the extension)
+
+When a registration worker scans a QR Code, they will see a web address and be given the option to open it in their web browser.
+
+In their web browser, they will be presented with clear information about the participant status, for example:
+
+![Registrant status with button to updat](/images/qrcode-checkin-registered.png)
+
+The registration worker can simply click the button to switch them to attended and off they go.
+
+If they have already checked in and have been coded as Attended (uh oh - someone re-using a registration qr code?), you will see:
+
+![Registrant status with button to updat](/images/qrcode-checkin-attended.png)
+
+If they have any other status, it will be displayed in red:
+
+![Registrant status with button to updat](/images/qrcode-checkin-pending.png)
+
 
 ## Known Issues
 
-(* FIXME *)
+None so far.
