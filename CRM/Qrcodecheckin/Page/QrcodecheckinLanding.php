@@ -6,9 +6,10 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
   var $code = NULL;
 
   public function run() {
-    
-    // Example: Set the page-title dynamically; alternatively, declare a static title in xml/Menu/*.xml
+    // Set the title first.
     CRM_Utils_System::setTitle(E::ts('QR Code Check-in page'));
+
+    // Now, try to get the participant_id and hash from the URL.
     $config = CRM_Core_Config::singleton();
     $path = CRM_Utils_Array::value($config->userFrameworkURLVar, $_GET);
     // Get everything after /qrcodecheckin/
@@ -16,19 +17,31 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
       $this->participant_id = $matches[1]; 
       $this->hash = $matches[2]; 
     }
+
+    // If we don't have both, refuseAccess with message saying URL might be broken.
     if (empty($this->participant_id) || empty($this->hash)) {
       $this->refuseAccess();
       return FALSE;
     }
 
+    // If we do have them, but they have been altered, send message.
     if (!$this->verifyHash()) {
       $this->refuseAccess();
       return FALSE;
     }
 
-    CRM_Core_Resources::singleton()->addScriptFile('net.ourpowerbase.qrcodecheckin', 'qrcodecheckin.js');
-    CRM_Core_Resources::singleton()->addStyleFile('net.ourpowerbase.qrcodecheckin', 'qrcodecheckin.css');
-    $this->setDetails();
+    // Now we know they check out, let's check permission. If they don't have
+    // permission to be here, send $pemrission_denied so our template can give
+    // them a friendly message that doesn't reveal any information.
+    if (!CRM_Core_Permission::check(QRCODECHECKIN_PERM) && !CRM_Core_Permission::check('edit event participants')) {
+      $this->assign('has_permission', FALSE);
+    }
+    else {
+      $this->assign('has_permission', TRUE);
+      CRM_Core_Resources::singleton()->addScriptFile('net.ourpowerbase.qrcodecheckin', 'qrcodecheckin.js');
+      CRM_Core_Resources::singleton()->addStyleFile('net.ourpowerbase.qrcodecheckin', 'qrcodecheckin.css');
+      $this->setDetails();
+    }
     parent::run();
   }
 

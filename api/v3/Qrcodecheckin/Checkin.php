@@ -28,7 +28,7 @@ function civicrm_api3_qrcodecheckin_Checkin($params) {
   // registration privileges. That is so we can allow volunteers to do this one
   // simple thing without having to give them privileges to update participants
   // fully.
-  if (!CRM_Core_Permission::check(QRCODECHECKIN_PERM)) {
+  if (!CRM_Core_Permission::check(QRCODECHECKIN_PERM) && !CRM_Core_Permission::check('edit event participants')) {
     throw new API_Exception('You do not have the proper permissions to do this.', 1);
   }
   
@@ -39,6 +39,7 @@ function civicrm_api3_qrcodecheckin_Checkin($params) {
   $get = array(
     'id' => $params['participant_id'],
   );
+  $returnValues = array();
   $result = civicrm_api3('Participant', 'get', $get);
   CRM_Core_Error::debug_var('result', $result);
   $values = array_pop($results['values']);
