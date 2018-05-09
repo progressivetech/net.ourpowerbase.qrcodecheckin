@@ -15,38 +15,9 @@ With one click, the registration worker can change their status from registered 
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
-## Requirements
-
-* PHP v5.4+
-* CiviCRM 4.7 
-
-## Installation (Web UI)
-
-This extension has not yet been published for installation via the web UI.
-
-## Installation (CLI, Zip)
-
-Sysadmins and developers may download the `.zip` file for this extension and
-install it with the command-line tool [cv](https://github.com/civicrm/cv).
-
-```bash
-cd <extension-dir>
-cv dl net.ourpowerbase.qrcodecheckin@https://github.com/FIXME/net.ourpowerbase.qrcodecheckin/archive/master.zip
-```
-
-## Installation (CLI, Git)
-
-Sysadmins and developers may clone the [Git](https://en.wikipedia.org/wiki/Git) repo for this extension and
-install it with the command-line tool [cv](https://github.com/civicrm/cv).
-
-```bash
-git clone https://github.com/FIXME/net.ourpowerbase.qrcodecheckin.git
-cv en qrcodecheckin
-```
-
 ## Usage
 
-Once enabled, each event configuration screen will have a new checkbox:
+Once enabled, each event configuration screen will have a new checkbox underneath the existing "Is this Event Active?" checkbox:
 
 ![Checkbox to enable QR Code checkin for this event](/images/qrcode-event-configuration.png)
 
@@ -54,7 +25,7 @@ This setting can only be set on one event at a time.
 
 After setting the checkbox for your event, search for all contacts that are registered for the event and place them in a group.
 
-Then, send an email to the group, that includes the qrcodecheckin.qrcodecheckin_img token:
+Then, send an email to the group, that includes the qrcodecheckin.qrcode_img token:
 
 ![Same email that include QR Code checkin token](/images/qrcode-compose-email.png)
 
@@ -62,7 +33,7 @@ Recipients will get an email that includes the QR Code as an embedded image:
 
 ![User's view of the QR Code in their email](/images/qrcode-view-email.png)
 
-Now onto the event... At the event, be sure to have all registration workers download a QR Code scanner to their phones (there are plenty of free scanners available for [android](https://play.google.com/store/apps/details?id=me.scan.android.client&hl=en) and on the iPhone it is built into the camera - so no extra software necessary).
+Now onto the event... At the event, be sure to have all registration workers download a QR Code scanner to their phones (there are plenty of free scanners available for Android, [here's one called QR Code Reader](https://play.google.com/store/apps/details?id=me.scan.android.client&hl=en) and on the iPhone it is built into the camera - so no extra software necessary).
 
 Next, the registration worker should login to CiviCRM on their phones.
 
@@ -88,7 +59,35 @@ If they have any other status, it will be displayed in red:
 
 ![Registrant status with button to updat](/images/qrcode-checkin-pending.png)
 
+## Requirements
 
+* PHP v5.4+
+* CiviCRM 4.7 
+
+## Installation (Web UI)
+
+This extension has not yet been published for installation via the web UI.
+
+## Installation (CLI, Zip)
+
+Sysadmins and developers may download the `.zip` file for this extension and
+install it with the command-line tool [cv](https://github.com/civicrm/cv).
+
+```bash
+cd <extension-dir>
+cv dl net.ourpowerbase.qrcodecheckin@https://github.com/progresssivetech/net.ourpowerbase.qrcodecheckin/archive/master.zip
+```
+
+## Installation (CLI, Git)
+
+Sysadmins and developers may clone the [Git](https://en.wikipedia.org/wiki/Git) repo for this extension and
+install it with the command-line tool [cv](https://github.com/civicrm/cv).
+
+```bash
+git clone https://github.com/progressivetech/net.ourpowerbase.qrcodecheckin.git
+cv en qrcodecheckin
+`
 ## Known Issues
 
 None so far.
+
