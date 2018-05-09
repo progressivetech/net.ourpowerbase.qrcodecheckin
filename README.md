@@ -1,7 +1,5 @@
 # QR Code Checkin
 
-![Screenshot](/images/screenshot.png)
-
 QRCode Checkin allows you to send an email that contains a scanable code to the registered participants for your event.
 
 Your registration workers can use any freely available QR Code scanning software on their phones to scan the code and open the encoded web address on their browser.
