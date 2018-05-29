@@ -10,6 +10,8 @@
   <div id="qrcheckin-participant-name">{$display_name}</div>
   <div id="qrcheckin-event-name">Event: {$event_title}</div>
   <div id="qrcheckin-status-line" class="{$status_class}">Current Status: <span id="qrcheckin-status">{$participant_status}</span></div>
+  <div id="qrcheckin-fee-level-line">Fee Level: {$fee_level}</div>
+  <div id="qrcheckin-fee-amount-line">Fee Amount: {$fee_amount}</div>
 
   { if $update_button }
   <button id="qrcheckin-update-button">{ts}Update to Attended{/ts}</button>

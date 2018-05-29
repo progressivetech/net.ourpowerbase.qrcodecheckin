@@ -49,7 +49,7 @@ function qrcodecheckin_civicrm_uninstall() {
   // Ensure directory for qr codes is cleaned up.
   $civiConfig = CRM_Core_Config::singleton();
   $dir = $civiConfig->imageUploadDir . '/qrcodecheckin/';
-  if (file_exists($dir)) {
+  if (!file_exists($dir)) {
     $files = array_diff(scandir($dir), array('.','..'));
     foreach ($files as $file) {
       if (is_dir("$dir/$file")) {
