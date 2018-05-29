@@ -46,6 +46,24 @@ function qrcodecheckin_civicrm_postInstall() {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_uninstall
  */
 function qrcodecheckin_civicrm_uninstall() {
+  // Ensure directory for qr codes is cleaned up.
+  $civiConfig = CRM_Core_Config::singleton();
+  $dir = $civiConfig->imageUploadDir . '/qrcodecheckin/';
+  if (!file_exists($dir)) {
+    $files = array_diff(scandir($dir), array('.','..'));
+    foreach ($files as $file) {
+      if (is_dir("$dir/$file")) {
+        // This is an error, but don't let it gum up the removal of the extension.
+        $msg = ts("Found directory in qrcodecheckin folder, I expected only QR code image files. I'm not deleting the folder. I am proceeding with uninstalling the extension.");
+        CRM_Core_Error::debug_log_message($msg);
+        $session = CRM_Core_Session::singleton();
+        $session->setStatus($msg);
+        return;
+      }
+      unlink("$dir/$file");
+    }
+    mkdir($civiConfig->imageUploadDir . '/qrcodecheckin/');
+  }
   _qrcodecheckin_civix_civicrm_uninstall();
 }
 
@@ -55,6 +73,12 @@ function qrcodecheckin_civicrm_uninstall() {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_enable
  */
 function qrcodecheckin_civicrm_enable() {
+  // Ensure directory for qr codes is available.
+  $civiConfig = CRM_Core_Config::singleton();
+  if (!file_exists($civiConfig->imageUploadDir . '/qrcodecheckin/')) {
+    mkdir($civiConfig->imageUploadDir . '/qrcodecheckin/');
+  }
+
    _qrcodecheckin_civix_civicrm_enable();
 }
 
@@ -236,7 +260,11 @@ function qrcodecheckin_get_code($participant_id) {
 }
 
 /**
- * Get URL
+ * Get URL for checkin.
+ *
+ * This is the URL that the QR Code points to when it is
+ * read. See qrcodecheckin_get_image_url for the URL of the image
+ * file that displays the QR Code.
  */
 function qrcodecheckin_get_url($code, $participant_id) {
   $query = NULL;
@@ -259,11 +287,48 @@ function qrcodecheckin_get_image_data($url, $base64 = TRUE) {
 }
 
 /**
- * Helper to return full file path to qrcode.
+ * Helper to return absolute URL to qrcode image file.
+ * 
+ * This is the URL to the image file containing the QR code.
+ */
+function qrcodecheckin_get_image_url($code) {
+  $civiConfig = CRM_Core_Config::singleton();
+  return $civiConfig->imageUploadURL . '/qrcodecheckin/' . $code . '.png';
+}
+
+/**
+ * Helper to return absolute file system path to qrcode image file.
+ * 
+ * This is the path to the image file containing the QR code.
  */
 function qrcodecheckin_get_path($code) {
   $civiConfig = CRM_Core_Config::singleton();
   return $civiConfig->imageUploadDir . '/qrcodecheckin/' . $code . '.png';
+}
+
+/**
+ * Create the qr image file
+ */
+function qrcodecheckin_create_image($code, $participant_id) {
+  $path = qrcodecheckin_get_path($code); 
+  if (!file_exists($path)) {
+    // Since we are saving a file, we don't want base64 data.
+    $url = qrcodecheckin_get_url($code, $participant_id);
+    $base64 = FALSE;
+    $data = qrcodecheckin_get_image_data($url, $base64);
+    file_put_contents($path, $data);
+  }
+}
+
+
+/**
+ * Delete qrcode image if it exists.
+ */
+function qrcodecheckin_delete_image($code) {
+  $path = qrcodecheckin_get_path($code);
+  if (file_exists($path)) {
+    unlink($path);
+  }
 }
 
 /**
@@ -282,7 +347,8 @@ function qrcodecheckin_civicrm_permission(&$permissions) {
  */
 function qrcodecheckin_civicrm_tokens(&$tokens) {
   $tokens['qrcodecheckin'] = array(
-    'qrcodecheckin.qrcode_img' => ts("HTML image tag with qrcode embedded in it."),
+    'qrcodecheckin.qrcode_url' => ts("URL to the QR code image file"),
+    'qrcodecheckin.qrcode_html' => ts("Block of HTML code with both QR code image and link"),
   );
 }
 
@@ -296,11 +362,23 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
       $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id);
       if ($participant_id) {
         $code = qrcodecheckin_get_code($participant_id);
-        // Now, get the data for an embedded image.
-        $url = qrcodecheckin_get_url($code, $participant_id);
-        $base64 = TRUE;
-        $data = qrcodecheckin_get_image_data($url, $base64);
-        $values[$contact_id]['qrcodecheckin.qrcode_img'] = '<img src="' . $data . '">';
+        // First ensure the image file is created.
+        qrcodecheckin_create_image($code, $participant_id);
+
+        // Get the absolute link to the image that will display the QR code.
+        $query = NULL;
+        $absolute = TRUE;
+        $link = qrcodecheckin_get_image_url($code); 
+
+        $values[$contact_id]['qrcodecheckin.qrcode_url'] = $link;
+        $values[$contact_id]['qrcodecheckin.qrcode_html'] = '<div>' .
+          '<img alt="QR Code with link to checkin page" src="' . $link .
+          '"></div><div>You should see a QR code above which will be used '.
+          'to quickly check you into the event. If you do not see a code '.
+          'display above, please enable the display of images in your email '.
+          'program or try accessing it <a href="' . $link . '">directly</a>. '.
+          'You may want to take a screen grab of your QR Code in case you need '.
+          'to display it when you do not have Internet access.</div>';
       }
     }
   }
