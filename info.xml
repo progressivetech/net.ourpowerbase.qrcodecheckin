@@ -1,26 +1,26 @@
 <?xml version="1.0"?>
 <extension key="net.ourpowerbase.qrcodecheckin" type="module">
   <file>qrcodecheckin</file>
-  <name>FIXME</name>
-  <description>FIXME</description>
+  <name>QR Code Checkin</name>
+  <description>QR Code Checkin allows you to send QR codes to event participants that can be scanned for faster checkin at the event.</description>
   <license>AGPL-3.0</license>
   <maintainer>
     <author>Jamie McClelland</author>
     <email>jamie@progressivetech.org</email>
   </maintainer>
   <urls>
-    <url desc="Main Extension Page">http://FIXME</url>
-    <url desc="Documentation">http://FIXME</url>
-    <url desc="Support">http://FIXME</url>
+    <url desc="Main Extension Page">https://github.com/progressivetech/net.ourpowerbase.qrcodecheckin</url>
+    <url desc="Documentation">https://github.com/progressivetech/net.ourpowerbase.qrcodecheckin</url>
+    <url desc="Support">https://github.com/progressivetech/net.ourpowerbase.qrcodecheckin/issues</url>
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
   <releaseDate>2018-05-04</releaseDate>
   <version>1.0</version>
-  <develStage>alpha</develStage>
+  <develStage>beta</develStage>
   <compatibility>
     <ver>4.7</ver>
+    <ver>5</ver>
   </compatibility>
-  <comments>This is a new, undeveloped module</comments>
   <civix>
     <namespace>CRM/Qrcodecheckin</namespace>
   </civix>
