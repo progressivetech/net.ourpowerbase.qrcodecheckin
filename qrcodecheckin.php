@@ -196,7 +196,7 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
   if ($formName == 'CRM_Event_Form_ManageEvent_EventInfo') {
     // This form is called once as part of the regular page load and again via an ajax snippet.
     // We only want the new fields loaded once - so limit ourselves to the ajax snippet load.
-    if (CRM_Utils_Request::retrieve('snippet', 'String', $this) == 'json') {
+    if (CRM_Utils_Request::retrieve('snippet', 'String', $form) == 'json') {
       $templatePath = realpath(dirname(__FILE__)."/templates");
       // Add the field element in the form
       $form->add('checkbox', 'default_qrcode_checkin_event', ts('When generating QR Code tokens, use this Event'));
