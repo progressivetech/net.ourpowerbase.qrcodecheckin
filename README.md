@@ -57,6 +57,29 @@ If they have any other status, it will be displayed in red:
 
 ![Registrant status with button to updat](/images/qrcode-checkin-pending.png)
 
+## Tokens
+
+* qrcodecheckin.qrcode_html - An HTML block to embed into your email containing the QRCode image and supporting text.
+* qrcodecheckin.qrcode_url - contains the direct URL to the QRCode image on the server.
+
+## Changing contents of QRCode / Tokens
+
+If you wish to override the values of the qrcode tokens / change the contents of the QR Code you can implement 
+`hook_civicrm_qrcodecheckin_tokenValues`:
+
+eg.
+```
+function myextension_civicrm_qrcodecheckin_tokenValues(&$values, $contact_id, &$handled) {
+  $link = 'http://example.org/qrcodes/myqrcode.png';
+  $values['qrcodecheckin.qrcode_url'] = $link;
+  $values['qrcodecheckin.qrcode_html'] = '<p>'. 
+    <img alt="QR Code with participant details" src="' . $link . '">Overridden HTML</p>
+  // If we handled the generation of the QRCode and URL set $handled=TRUE
+  $handled = TRUE;
+}
+```
+
+
 ## Requirements
 
 * PHP v5.4+
@@ -84,7 +107,8 @@ install it with the command-line tool [cv](https://github.com/civicrm/cv).
 ```bash
 git clone https://github.com/progressivetech/net.ourpowerbase.qrcodecheckin.git
 cv en qrcodecheckin
-`
+```
+
 ## Known Issues
 
 None so far.

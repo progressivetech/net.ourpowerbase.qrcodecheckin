@@ -159,34 +159,6 @@ function qrcodecheckin_civicrm_entityTypes(&$entityTypes) {
   _qrcodecheckin_civix_civicrm_entityTypes($entityTypes);
 }
 
-// --- Functions below this ship commented out. Uncomment as required. ---
-
-/**
- * Implements hook_civicrm_preProcess().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
- *
-function qrcodecheckin_civicrm_preProcess($formName, &$form) {
-
-} // */
-
-/**
- * Implements hook_civicrm_navigationMenu().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_navigationMenu
- *
-function qrcodecheckin_civicrm_navigationMenu(&$menu) {
-  _qrcodecheckin_civix_insert_navigation_menu($menu, 'Mailings', array(
-    'label' => E::ts('New subliminal message'),
-    'name' => 'mailing_subliminal_message',
-    'url' => 'civicrm/mailing/subliminal',
-    'permission' => 'access CiviMail',
-    'operator' => 'OR',
-    'separator' => 0,
-  ));
-  _qrcodecheckin_civix_navigationMenu($menu);
-} // */
-
 /**
  * Implements hook_civicrm_buildForm().
  *
@@ -310,7 +282,7 @@ function qrcodecheckin_get_path($code) {
  * Create the qr image file
  */
 function qrcodecheckin_create_image($code, $participant_id) {
-  $path = qrcodecheckin_get_path($code); 
+  $path = qrcodecheckin_get_path($code);
   if (!file_exists($path)) {
     // Since we are saving a file, we don't want base64 data.
     $url = qrcodecheckin_get_url($code, $participant_id);
@@ -319,7 +291,6 @@ function qrcodecheckin_create_image($code, $participant_id) {
     file_put_contents($path, $data);
   }
 }
-
 
 /**
  * Delete qrcode image if it exists.
@@ -356,9 +327,16 @@ function qrcodecheckin_civicrm_tokens(&$tokens) {
  * Implements hook_civicrm_tokenValues.
  */
 function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = array(), $context = null) {
-
   if (array_key_exists('qrcodecheckin', $tokens)) {
     foreach($cids as $contact_id) {
+      // Allow token values to be overridden by extensions
+      $handled = FALSE;
+      CRM_Qrcodecheckin_Hook::tokenValues($values[$contact_id], $contact_id, $handled);
+      if ($handled) {
+        // Hook processed the qrcode tokens for us
+        continue;
+      }
+
       $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id);
       if ($participant_id) {
         $code = qrcodecheckin_get_code($participant_id);
@@ -389,6 +367,11 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
  */
 function qrcodecheckin_participant_id_for_contact_id($contact_id) {
   $event_id = civicrm_api3('Setting', 'getvalue', array('name' => 'default_qrcode_checkin_event'));
+  if (!$event_id) {
+    // We haven't set a default event to generate QR Codes. We don't need to crash, just don't return participant ID and qrcode tokens will be blank.
+    return NULL;
+  }
+
   $sql = "SELECT p.id FROM civicrm_contact c JOIN civicrm_participant p 
     ON c.id = p.contact_id WHERE is_deleted = 0 AND c.id = %0 AND p.event_id = %1";
   $params = array(
