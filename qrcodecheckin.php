@@ -367,6 +367,11 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
  */
 function qrcodecheckin_participant_id_for_contact_id($contact_id) {
   $event_id = civicrm_api3('Setting', 'getvalue', array('name' => 'default_qrcode_checkin_event'));
+  if (!$event_id) {
+    // We haven't set a default event to generate QR Codes. We don't need to crash, just don't return participant ID and qrcode tokens will be blank.
+    return NULL;
+  }
+
   $sql = "SELECT p.id FROM civicrm_contact c JOIN civicrm_participant p 
     ON c.id = p.contact_id WHERE is_deleted = 0 AND c.id = %0 AND p.event_id = %1";
   $params = array(
