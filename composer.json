@@ -1,4 +1,7 @@
 {
+  "name": "australian_greens/net.ourpowerbase.qrcodecheckin",
+  "description": "CiviCRM Extension to support QR codes for event management",
+  "type": "drupal-module",
 	"require": {
 		"php": ">=7.0.3",
 		"chillerlan/php-qrcode": "v2.0.6"
