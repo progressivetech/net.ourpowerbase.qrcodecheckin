@@ -3,7 +3,7 @@
   "description": "CiviCRM Extension to support QR codes for event management",
   "type": "drupal-module",
 	"require": {
-		"php": ">=7.0.3",
-		"chillerlan/php-qrcode": "v2.0.6"
+		"php": "^7.2",
+		"chillerlan/php-qrcode": "^3.3"
 	}
 }

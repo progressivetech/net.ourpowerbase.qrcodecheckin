@@ -12,8 +12,7 @@
 
 namespace chillerlan\QRCodeTest\Output;
 
-use chillerlan\QRCode\Output\QRImage;
-use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\{QRCode, Output\QRImage};
 
 class QRImageTest extends QROutputTestAbstract{
 
@@ -21,9 +20,9 @@ class QRImageTest extends QROutputTestAbstract{
 
 	public function types(){
 		return [
-			[QRCode::OUTPUT_IMAGE_PNG],
-			[QRCode::OUTPUT_IMAGE_GIF],
-			[QRCode::OUTPUT_IMAGE_JPG],
+			'png' => [QRCode::OUTPUT_IMAGE_PNG],
+			'gif' => [QRCode::OUTPUT_IMAGE_GIF],
+			'jpg' => [QRCode::OUTPUT_IMAGE_JPG],
 		];
 	}
 
@@ -32,14 +31,11 @@ class QRImageTest extends QROutputTestAbstract{
 	 * @param $type
 	 */
 	public function testImageOutput($type){
-		$this->options->outputType = $type;
-		$this->options->cachefile  = $this::cachefile.$type;
-		$this->setOutputInterface();
-		$this->outputInterface->dump();
-
-		$this->options->cachefile = null;
+		$this->options->outputType  = $type;
 		$this->options->imageBase64 = false;
+
 		$this->setOutputInterface();
+		$this->outputInterface->dump($this::cachefile.$type);
 		$img = $this->outputInterface->dump();
 
 		if($type === QRCode::OUTPUT_IMAGE_JPG){ // jpeg encoding may cause different results
@@ -47,6 +43,27 @@ class QRImageTest extends QROutputTestAbstract{
 		}
 
 		$this->assertSame($img, file_get_contents($this::cachefile.$type));
+	}
+
+	public function testSetModuleValues(){
+
+		$this->options->moduleValues = [
+			// data
+			1024 => [0, 0, 0],
+			4    => [255, 255, 255],
+		];
+
+		$this->setOutputInterface()->dump();
+
+		$this->assertTrue(true); // tricking the code coverage
+	}
+
+	public function testOutputGetResource():void{
+		$this->options->returnResource = true;
+
+		$this->setOutputInterface();
+
+		$this::assertIsResource($this->outputInterface->dump());
 	}
 
 }

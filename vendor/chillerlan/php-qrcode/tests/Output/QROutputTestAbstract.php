@@ -12,16 +12,16 @@
 
 namespace chillerlan\QRCodeTest\Output;
 
-use chillerlan\QRCode\Data\Byte;
-use chillerlan\QRCode\Output\QROutputInterface;
 use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Data\Byte;
+use chillerlan\QRCode\Output\{QRCodeOutputException, QROutputInterface};
 use chillerlan\QRCodeTest\QRTestAbstract;
 
-/**
- */
+use function dirname, file_exists, mkdir;
+
 abstract class QROutputTestAbstract extends QRTestAbstract{
 
-	const cachefile = __DIR__.'/output_test.';
+	const cachefile = __DIR__.'/../../.build/output_test/test.';
 
 	/**
 	 * @var \chillerlan\QRCode\Output\QROutputInterface
@@ -38,10 +38,15 @@ abstract class QROutputTestAbstract extends QRTestAbstract{
 	 */
 	protected $matrix;
 
-	protected function setUp(){
+	protected function setUp():void{
 		parent::setUp();
 
-		$this->options         = new QROptions;
+		$buildDir = dirname($this::cachefile);
+		if(!file_exists($buildDir)){
+			mkdir($buildDir, 0777, true);
+		}
+
+		$this->options = new QROptions;
 		$this->setOutputInterface();
 	}
 
@@ -54,11 +59,10 @@ abstract class QROutputTestAbstract extends QRTestAbstract{
 		$this->assertInstanceOf(QROutputInterface::class, $this->outputInterface);
 	}
 
-	/**
-	 * @expectedException \chillerlan\QRCode\Output\QRCodeOutputException
-	 * @expectedExceptionMessage Could not write data to cache file: /foo
-	 */
 	public function testSaveException(){
+		$this->expectException(QRCodeOutputException::class);
+		$this->expectExceptionMessage('Could not write data to cache file: /foo');
+
 		$this->options->cachefile = '/foo';
 		$this->setOutputInterface();
 		$this->outputInterface->dump();

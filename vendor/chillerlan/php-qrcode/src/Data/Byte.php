@@ -14,6 +14,8 @@ namespace chillerlan\QRCode\Data;
 
 use chillerlan\QRCode\QRCode;
 
+use function ord;
+
 /**
  * Byte mode, ISO-8859-1 or UTF-8
  */
@@ -32,7 +34,7 @@ class Byte extends QRDataAbstract{
 	/**
 	 * @inheritdoc
 	 */
-	protected function write(string $data){
+	protected function write(string $data):void{
 		$i = 0;
 
 		while($i < $this->strlen){

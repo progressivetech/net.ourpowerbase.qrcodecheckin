@@ -12,9 +12,12 @@
 
 namespace chillerlan\QRCodeTest;
 
-use chillerlan\QRCode\QROptions;
-use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\{QROptions, QRCode};
+use chillerlan\QRCode\Data\{AlphaNum, Byte, Number, QRCodeDataException};
+use chillerlan\QRCode\Output\QRCodeOutputException;
 use chillerlan\QRCodeExamples\MyCustomOutput;
+
+use function random_bytes;
 
 class QRCodeTest extends QRTestAbstract{
 
@@ -25,7 +28,7 @@ class QRCodeTest extends QRTestAbstract{
 	 */
 	protected $qrcode;
 
-	protected function setUp(){
+	protected function setUp():void{
 		parent::setUp();
 
 		$this->qrcode = $this->reflection->newInstance();
@@ -50,13 +53,13 @@ class QRCodeTest extends QRTestAbstract{
 
 	public function typeDataProvider(){
 		return [
-			[QRCode::OUTPUT_IMAGE_PNG, 'data:image/png;base64,'],
-			[QRCode::OUTPUT_IMAGE_GIF, 'data:image/gif;base64,'],
-			[QRCode::OUTPUT_IMAGE_JPG, 'data:image/jpg;base64,'],
-			[QRCode::OUTPUT_MARKUP_SVG, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="'],
-			[QRCode::OUTPUT_MARKUP_HTML, '<div><span style="background:'],
-			[QRCode::OUTPUT_STRING_TEXT, '⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕'.PHP_EOL],
-			[QRCode::OUTPUT_STRING_JSON, '[[18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18],'],
+			'png'  => [QRCode::OUTPUT_IMAGE_PNG, 'data:image/png;base64,'],
+			'gif'  => [QRCode::OUTPUT_IMAGE_GIF, 'data:image/gif;base64,'],
+			'jpg'  => [QRCode::OUTPUT_IMAGE_JPG, 'data:image/jpg;base64,'],
+			'svg'  => [QRCode::OUTPUT_MARKUP_SVG, 'data:image/svg+xml;base64,'],
+			'html' => [QRCode::OUTPUT_MARKUP_HTML, '<div><span style="background:'],
+			'text' => [QRCode::OUTPUT_STRING_TEXT, '⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕'.PHP_EOL],
+			'json' => [QRCode::OUTPUT_STRING_JSON, '[[18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18],'],
 		];
 	}
 
@@ -67,30 +70,20 @@ class QRCodeTest extends QRTestAbstract{
 	public function testRenderImage($type, $expected){
 		$this->qrcode = $this->reflection->newInstanceArgs([new QROptions(['outputType' => $type])]);
 
-		$this->assertContains($expected, $this->qrcode->render('test'));
+		$this->assertStringContainsString($expected, $this->qrcode->render('test'));
 	}
 
-	/**
-	 * @expectedException \chillerlan\QRCode\QRCodeException
-	 * @expectedExceptionMessage Invalid error correct level: 42
-	 */
-	public function testSetOptionsException(){
-		$this->qrcode->setOptions(new QROptions(['eccLevel' => 42]));
-	}
-
-	/**
-	 * @expectedException \chillerlan\QRCode\Output\QRCodeOutputException
-	 * @expectedExceptionMessage invalid output type
-	 */
 	public function testInitDataInterfaceException(){
-		$this->qrcode->setOptions(new QROptions(['outputType' => 'foo']))->render('test');
+		$this->expectException(QRCodeOutputException::class);
+		$this->expectExceptionMessage('invalid output type');
+
+		(new QRCode(new QROptions(['outputType' => 'foo'])))->render('test');
 	}
 
-	/**
-	 * @expectedException \chillerlan\QRCode\Data\QRCodeDataException
-	 * @expectedExceptionMessage QRCode::getMatrix() No data given.
-	 */
 	public function testGetMatrixException(){
+		$this->expectException(QRCodeDataException::class);
+		$this->expectExceptionMessage('QRCode::getMatrix() No data given.');
+
 		$this->qrcode->getMatrix('');
 	}
 
@@ -120,4 +113,28 @@ class QRCodeTest extends QRTestAbstract{
 
 		$this->assertSame($expected, $this->reflection->newInstanceArgs([$options])->render('test'));
 	}
+
+	public function testDataModeOverride(){
+		$this->qrcode = $this->reflection->newInstance();
+
+		$this->assertInstanceOf(Number::class, $this->qrcode->initDataInterface('123'));
+		$this->assertInstanceOf(AlphaNum::class, $this->qrcode->initDataInterface('ABC123'));
+		$this->assertInstanceOf(Byte::class, $this->qrcode->initDataInterface(random_bytes(32)));
+
+		$this->qrcode = $this->reflection->newInstanceArgs([new QROptions(['dataMode' => 'Byte'])]);
+
+		$this->assertInstanceOf(Byte::class, $this->qrcode->initDataInterface('123'));
+		$this->assertInstanceOf(Byte::class, $this->qrcode->initDataInterface('ABC123'));
+		$this->assertInstanceOf(Byte::class, $this->qrcode->initDataInterface(random_bytes(32)));
+	}
+
+	public function testDataModeOverrideError(){
+		$this->expectException(QRCodeDataException::class);
+		$this->expectExceptionMessage('illegal char:');
+
+		$this->qrcode = $this->reflection->newInstanceArgs([new QROptions(['dataMode' => 'AlphaNum'])]);
+
+		$this->qrcode->initDataInterface(random_bytes(32));
+	}
+
 }

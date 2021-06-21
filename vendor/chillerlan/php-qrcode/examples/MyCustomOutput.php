@@ -14,11 +14,13 @@ namespace chillerlan\QRCodeExamples;
 
 use chillerlan\QRCode\Output\QROutputAbstract;
 
-/**
- */
 class MyCustomOutput extends QROutputAbstract{
 
-	public function dump(){
+	protected function setModuleValues():void{
+		// TODO: Implement setModuleValues() method.
+	}
+
+	public function dump(string $file = null){
 
 		$output = '';
 
