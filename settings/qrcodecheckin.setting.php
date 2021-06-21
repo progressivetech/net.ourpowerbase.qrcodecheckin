@@ -5,11 +5,12 @@
  */
 
 return array(
-  'default_qrcode_checkin_event' => array(
+  'qrcode_enabled_events' => array(
     'group_name' => 'QR Code Checkin',
     'group' => 'qrcodecheckin',
-    'name' => 'default_qrcode_checkin_event',
-    'type' => 'Integer',
+    'name' => 'qrcode_enabled_events',
+    'type' => 'String',
+    'serialize' => CRM_Core_DAO::SERIALIZE_JSON,
     'default' => NULL,
     'add' => '4.7',
     'is_domain' => 1,

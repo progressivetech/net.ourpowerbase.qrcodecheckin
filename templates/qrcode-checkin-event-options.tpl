@@ -1,15 +1,15 @@
 <table>
-  <tr id="default-qrcode-checkin-event-tr">
+  <tr id="qrcode-enabled-event-tr">
     <td>&nbsp;</td>
     <td>
-      {$form.default_qrcode_checkin_event.html}
-      {$form.default_qrcode_checkin_event.label}
-      <div class="help">{ts}If enabled, when sending email to contacts that include the QR Checkin Code token, the QR Code for this event will be used (you can only have one event enabled at a time, enabling this event will disable all other events).{/ts}</div>
+      {$form.qrcode_enabled_event.html}
+      {$form.qrcode_enabled_event.label}
+      <div class="help">{ts}If enabled, when sending email to contacts you can include a QR Checkin Code token for this event.{/ts}</div>
     </td>
   </tr>
 </table>
 
 <script type="text/javascript">
-    CRM.$('tr#default-qrcode-checkin-event-tr').insertAfter('tr.crm-event-manage-eventinfo-form-block-is_active');
+    CRM.$('tr#qrcode-enabled-event-tr').insertAfter('tr.crm-event-manage-eventinfo-form-block-is_active');
 </script>
 
