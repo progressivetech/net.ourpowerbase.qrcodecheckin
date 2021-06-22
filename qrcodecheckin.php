@@ -171,21 +171,19 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
     if (CRM_Utils_Request::retrieve('snippet', 'String', $form) == 'json') {
       $templatePath = realpath(dirname(__FILE__)."/templates");
       // Add the field element in the form
-      $form->add('checkbox', 'qrcode_enabled_event', ts('Generate QR Code tokens for this Event'));
+      $form->add('checkbox', 'qrcode_enabled_event', ts('Enable QR Code tokens for this Event'));
       // dynamically insert a template block in the page
       CRM_Core_Region::instance('page-body')->add([
         'template' => "{$templatePath}/qrcode-checkin-event-options.tpl"
       ]);
 
-      $qrcode_enabled_events = Civi::settings()->get('qrcode_enabled_events');
-      if (is_null($qrcode_enabled_events)) { $qrcode_enabled_events = []; }
-      watchdog('qrcode', 'ev: %s', ['%s' => print_r($qrcode_enabled_events, true)], WATCHDOG_NOTICE);
+      $qrcode_events = Civi::settings()->get('qrcode_events');
       $event_id = intval($form->getVar('_id'));
-      if (in_array($event_id, $qrcode_enabled_events)) {
+      if (in_array($event_id, $qrcode_events)) {
         $defaults['qrcode_enabled_event'] = 1;
       }
       else {
-        $defaults['qrcode_enabled_events'] = 0;
+        $defaults['qrcode_enabled_event'] = 0;
       }
       $form->setDefaults($defaults);
     }
@@ -205,18 +203,18 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
     $qrcode_enabled_event = array_key_exists('qrcode_enabled_event', $vals) ? TRUE : FALSE;
 
     // Add/Remove event ID to/from array of QR-enabled events as required
-    $qrcode_enabled_events = Civi::settings()->get('qrcode_enabled_events');
-    if (is_null($qrcode_enabled_events)) { $qrcode_enabled_events = []; }
+    $qrcode_events = Civi::settings()->get('qrcode_events');
     if ($qrcode_enabled_event) {
       // Add event ID to array of QR-enabled
-      if (!in_array($event_id, $qrcode_enabled_events)) {
-        Civi::settings()->set('qrcode_enabled_events', array_push($qrcode_enabled_events, $event_id));
+      if (!in_array($event_id, $qrcode_events)) {
+        $qrcode_events[] = $event_id;
+        Civi::settings()->set('qrcode_events', $qrcode_events);
       }
     }
-    else if (in_array($event_id, $qrcode_enabled_events)) {
+    else if (in_array($event_id, $qrcode_events)) {
       // Remove event ID from array
-      $qrcode_enabled_events = array_diff($qrcode_enabled_events, $event_id);
-      Civi::settings()->set('qrcode_enabled_events', array_push($qrcode_enabled_events, $event_id));
+      $qrcode_events = array_diff($qrcode_events, [$event_id]);
+      Civi::settings()->set('qrcode_events', $qrcode_events);
     }
   }
 }
@@ -323,12 +321,27 @@ function qrcodecheckin_civicrm_permission(&$permissions) {
  * Implements hook_civicrm_tokens.
  */
 function qrcodecheckin_civicrm_tokens(&$tokens) {
-  $qrcode_enabled_events = civicrm_api3('Setting', 'getvalue', ['name' => 'qrcode_enabled_events']);
-
-  $tokens['qrcodecheckin'] = [
-    'qrcodecheckin.qrcode_url_' . $event_id => ts("URL to the QR code image file"),
-    'qrcodecheckin.qrcode_html' . $event_id  => ts("Block of HTML code with both QR code image and link"),
-  ];
+  $qrcode_events = Civi::settings()->get('qrcode_events');
+  if (empty($qrcode_events)) {
+    return;
+  }
+  // There are QR enabled events so let's define tokens for each of them
+  $events = \Civi\Api4\Event::get(FALSE)
+    ->addSelect('id', 'title')
+    ->addWhere('is_active', '=', TRUE)
+    ->addWhere('start_date', '>', date('Y-m-d'))
+    ->addWhere('is_online_registration', '=', TRUE)
+    ->addWhere('id', 'IN', $qrcode_events)
+    ->execute();
+  foreach ($events as $event) {
+    watchdog('qrcode', 'event: %s', ['%s' => print_r($event, TRUE)], WATCHDOG_NOTICE);
+    $token_name = 'qrcodecheckin.qrcode_url_' . $event['id'];
+    $token_desc = 'QRCode link for event ' . $event['title'];
+    $tokens['qrcodecheckin'][] = [$token_name => ts($token_desc)];
+    $token_name = 'qrcodecheckin.qrcode_html_' . $event['id'];
+    $token_desc = 'QRCode image and link for event ' . $event['title'];
+    $tokens['qrcodecheckin'][] = [$token_name => ts($token_desc)];
+  }
 }
 
 /**
@@ -336,6 +349,11 @@ function qrcodecheckin_civicrm_tokens(&$tokens) {
  */
 function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = [], $context = null) {
   if (array_key_exists('qrcodecheckin', $tokens)) {
+    $tokens['qrcodecheckin'];
+    $event_ids = [];
+    foreach ($tokens['qrcodecheckin'] as $token) {
+      $event_ids[] = preg_replace('/\D/', '', $token);
+    }
     foreach($cids as $contact_id) {
       // Allow token values to be overridden by extensions
       $handled = FALSE;
@@ -345,7 +363,7 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
         continue;
       }
 
-      $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id);
+      $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id);
       if ($participant_id) {
         $code = qrcodecheckin_get_code($participant_id);
         // First ensure the image file is created.
