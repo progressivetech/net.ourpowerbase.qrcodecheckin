@@ -335,12 +335,8 @@ function qrcodecheckin_civicrm_tokens(&$tokens) {
     ->execute();
   foreach ($events as $event) {
     watchdog('qrcode', 'event: %s', ['%s' => print_r($event, TRUE)], WATCHDOG_NOTICE);
-    $token_name = 'qrcodecheckin.qrcode_url_' . $event['id'];
-    $token_desc = 'QRCode link for event ' . $event['title'];
-    $tokens['qrcodecheckin'][] = [$token_name => ts($token_desc)];
-    $token_name = 'qrcodecheckin.qrcode_html_' . $event['id'];
-    $token_desc = 'QRCode image and link for event ' . $event['title'];
-    $tokens['qrcodecheckin'][] = [$token_name => ts($token_desc)];
+    $tokens['qrcodecheckin'][] = ['qrcodecheckin.qrcode_url_' . $event['id'] => ts('QRCode link for event ' . $event['title'])];
+    $tokens['qrcodecheckin'][] = ['qrcodecheckin.qrcode_html_' . $event['id'] => ts('QRCode image and link for event ' . $event['title'])];
   }
 }
 
@@ -363,26 +359,28 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
         continue;
       }
 
-      $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id);
-      if ($participant_id) {
-        $code = qrcodecheckin_get_code($participant_id);
-        // First ensure the image file is created.
-        qrcodecheckin_create_image($code, $participant_id);
+      foreach ($event_ids as $event_id) {
+        $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id);
+        if ($participant_id) {
+          $code = qrcodecheckin_get_code($participant_id);
+          // First ensure the image file is created.
+          qrcodecheckin_create_image($code, $participant_id);
 
-        // Get the absolute link to the image that will display the QR code.
-        $query = NULL;
-        $absolute = TRUE;
-        $link = qrcodecheckin_get_image_url($code); 
-
-        $values[$contact_id]['qrcodecheckin.qrcode_url'] = $link;
-        $values[$contact_id]['qrcodecheckin.qrcode_html'] = '<div>' .
-          '<img alt="QR Code with link to checkin page" src="' . $link .
-          '"></div><div>You should see a QR code above which will be used '.
-          'to quickly check you into the event. If you do not see a code '.
-          'display above, please enable the display of images in your email '.
-          'program or try accessing it <a href="' . $link . '">directly</a>. '.
-          'You may want to take a screen grab of your QR Code in case you need '.
-          'to display it when you do not have Internet access.</div>';
+          // Get the absolute link to the image that will display the QR code.
+          $query = NULL;
+          $absolute = TRUE;
+          $link = qrcodecheckin_get_image_url($code); 
+  
+          $values[$contact_id]['qrcodecheckin.qrcode_url_' . $event_id] = $link;
+          $values[$contact_id]['qrcodecheckin.qrcode_html_' . $event_id] = '<div>' .
+            '<img alt="QR Code with link to checkin page" src="' . $link .
+            '"></div><div>You should see a QR code above which will be used '.
+            'to quickly check you into the event. If you do not see a code '.
+            'display above, please enable the display of images in your email '.
+            'program or try accessing it <a href="' . $link . '">directly</a>. '.
+            'You may want to take a screen grab of your QR Code in case you need '.
+            'to display it when you do not have Internet access.</div>';
+        }
       }
     }
   }
@@ -391,15 +389,10 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
 /**
  * Fetch participant_id from contact_id
  */
-function qrcodecheckin_participant_id_for_contact_id($contact_id) {
-  $event_id = civicrm_api3('Setting', 'getvalue', ['name' => 'default_qrcode_checkin_event']);
-  if (!$event_id) {
-    // We haven't set a default event to generate QR Codes. We don't need to crash, just don't return participant ID and qrcode tokens will be blank.
-    return NULL;
-  }
+function qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id) {
 
   $sql = "SELECT p.id FROM civicrm_contact c JOIN civicrm_participant p 
-    ON c.id = p.contact_id WHERE is_deleted = 0 AND c.id = %0 AND p.event_id = %1";
+    ON c.id = p.contact_id WHERE c.is_deleted = 0 AND c.id = %0 AND p.event_id = %1";
   $params = [
     0 => [$contact_id, 'Integer'],
     1 => [$event_id, 'Integer']
