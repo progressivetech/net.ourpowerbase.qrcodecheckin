@@ -333,11 +333,13 @@ function qrcodecheckin_civicrm_tokens(&$tokens) {
     ->addWhere('is_online_registration', '=', TRUE)
     ->addWhere('id', 'IN', $qrcode_events)
     ->execute();
+  $customTokens = [];
   foreach ($events as $event) {
-    watchdog('qrcode', 'event: %s', ['%s' => print_r($event, TRUE)], WATCHDOG_NOTICE);
-    $tokens['qrcodecheckin'][] = ['qrcodecheckin.qrcode_url_' . $event['id'] => ts('QRCode link for event ' . $event['title'])];
-    $tokens['qrcodecheckin'][] = ['qrcodecheckin.qrcode_html_' . $event['id'] => ts('QRCode image and link for event ' . $event['title'])];
+    $customTokens['qrcodecheckin.qrcode_url_' . $event['id']] = ts('QRCode link for event ' . $event['title']);
+    $customTokens['qrcodecheckin.qrcode_html_' . $event['id']] = ts('QRCode image and link for event ' . $event['title']);
   }
+  $tokens['qrcodecheckin'] = $customTokens;
+  watchdog('qrcode', 'tokens: %s', ['%s' => print_r($tokens, TRUE)], WATCHDOG_NOTICE);
 }
 
 /**
