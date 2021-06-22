@@ -38,7 +38,7 @@ function civicrm_api3_qrcodecheckin_Checkin($params) {
   
   $get = [ 
     'id' => $params['participant_id'],
-  );
+  ];
   $returnValues = [];
   $result = civicrm_api3('Participant', 'get', $get);
   CRM_Core_Error::debug_var('result', $result);

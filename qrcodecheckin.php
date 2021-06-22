@@ -232,7 +232,7 @@ function qrcodecheckin_get_code($participant_id) {
   }
   $dao->fetch();
   $user_hash = $dao->hash;
-  return hash('sha256', $participant_id + $user_hash + CIVICRM_SITE_KEY);
+  return hash('sha256', $participant_id . $user_hash . CIVICRM_SITE_KEY);
 }
 
 /**
@@ -339,7 +339,6 @@ function qrcodecheckin_civicrm_tokens(&$tokens) {
     $customTokens['qrcodecheckin.qrcode_html_' . $event['id']] = ts('QRCode image and link for event ' . $event['title']);
   }
   $tokens['qrcodecheckin'] = $customTokens;
-  watchdog('qrcode', 'tokens: %s', ['%s' => print_r($tokens, TRUE)], WATCHDOG_NOTICE);
 }
 
 /**
