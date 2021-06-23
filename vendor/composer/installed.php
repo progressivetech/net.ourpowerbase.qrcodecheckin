@@ -6,20 +6,11 @@
     'aliases' => 
     array (
     ),
-    'reference' => '995c112e9b8f601ebfc8ab0d1108a08f15b8cab2',
-    'name' => 'australian_greens/net.ourpowerbase.qrcodecheckin',
+    'reference' => '7d58f9fafa320c3416f460a24a6275c68d5dc505',
+    'name' => 'progressivetech/net.ourpowerbase.qrcodecheckin',
   ),
   'versions' => 
   array (
-    'australian_greens/net.ourpowerbase.qrcodecheckin' => 
-    array (
-      'pretty_version' => 'dev-master',
-      'version' => 'dev-master',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '995c112e9b8f601ebfc8ab0d1108a08f15b8cab2',
-    ),
     'chillerlan/php-qrcode' => 
     array (
       'pretty_version' => '3.4.0',
@@ -37,6 +28,15 @@
       array (
       ),
       'reference' => 'b9b0431dffd74102ee92348a63b4c33fc8ba639b',
+    ),
+    'progressivetech/net.ourpowerbase.qrcodecheckin' => 
+    array (
+      'pretty_version' => 'dev-master',
+      'version' => 'dev-master',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '7d58f9fafa320c3416f460a24a6275c68d5dc505',
     ),
   ),
 );
