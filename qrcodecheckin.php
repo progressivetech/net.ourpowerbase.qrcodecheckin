@@ -177,7 +177,7 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
         'template' => "{$templatePath}/qrcode-checkin-event-options.tpl"
       ]);
 
-      $qrcode_events = Civi::settings()->get('qrcode_events');
+      $qrcode_events = \Civi::settings()->get('qrcode_events');
       $event_id = intval($form->getVar('_id'));
       if (in_array($event_id, $qrcode_events)) {
         $defaults['qrcode_enabled_event'] = 1;
@@ -203,18 +203,18 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
     $qrcode_enabled_event = array_key_exists('qrcode_enabled_event', $vals) ? TRUE : FALSE;
 
     // Add/Remove event ID to/from array of QR-enabled events as required
-    $qrcode_events = Civi::settings()->get('qrcode_events');
+    $qrcode_events = \Civi::settings()->get('qrcode_events');
     if ($qrcode_enabled_event) {
       // Add event ID to array of QR-enabled
       if (!in_array($event_id, $qrcode_events)) {
         $qrcode_events[] = $event_id;
-        Civi::settings()->set('qrcode_events', $qrcode_events);
+        \Civi::settings()->set('qrcode_events', $qrcode_events);
       }
     }
     else if (in_array($event_id, $qrcode_events)) {
       // Remove event ID from array
       $qrcode_events = array_diff($qrcode_events, [$event_id]);
-      Civi::settings()->set('qrcode_events', $qrcode_events);
+      \Civi::settings()->set('qrcode_events', $qrcode_events);
     }
   }
 }
@@ -321,17 +321,18 @@ function qrcodecheckin_civicrm_permission(&$permissions) {
  * Implements hook_civicrm_tokens.
  */
 function qrcodecheckin_civicrm_tokens(&$tokens) {
-  $qrcode_events = Civi::settings()->get('qrcode_events');
+  $qrcode_events = \Civi::settings()->get('qrcode_events');
   if (empty($qrcode_events)) {
     return;
   }
   // There are QR enabled events so let's define tokens for each of them
   $events = \Civi\Api4\Event::get(FALSE)
     ->addSelect('id', 'title')
+    ->addClause('OR', ['end_date', 'IS NULL'], ['end_date', '>', date('Y-m-d')])
     ->addWhere('is_active', '=', TRUE)
-    ->addWhere('start_date', '>', date('Y-m-d'))
     ->addWhere('is_online_registration', '=', TRUE)
     ->addWhere('id', 'IN', $qrcode_events)
+    ->setLimit(0)
     ->execute();
   $customTokens = [];
   foreach ($events as $event) {
