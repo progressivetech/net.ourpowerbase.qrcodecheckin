@@ -330,7 +330,6 @@ function qrcodecheckin_civicrm_tokens(&$tokens) {
     ->addSelect('id', 'title')
     ->addClause('OR', ['end_date', 'IS NULL'], ['end_date', '>', date('Y-m-d')])
     ->addWhere('is_active', '=', TRUE)
-    ->addWhere('is_online_registration', '=', TRUE)
     ->addWhere('id', 'IN', $qrcode_events)
     ->setLimit(0)
     ->execute();
