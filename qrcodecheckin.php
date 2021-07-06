@@ -256,7 +256,8 @@ function qrcodecheckin_get_image_data($url, $base64 = TRUE) {
   $options = new chillerlan\QRCode\QROptions(
     [
       'outputType' => chillerlan\QRCode\QRCode::OUTPUT_IMAGE_PNG,
-      'imageBase64' => $base64 
+      'imageBase64' => $base64,
+      'imageTransparent' => FALSE,
     ]
   );
   return (new chillerlan\QRCode\QRCode($options))->render($url);
