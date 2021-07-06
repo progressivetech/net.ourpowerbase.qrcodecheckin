@@ -14,28 +14,63 @@ namespace chillerlan\QRCode\Output;
 
 use chillerlan\QRCode\QRCode;
 
+use function is_string, sprintf, strip_tags, trim;
+
 /**
  * Converts the matrix into markup types: HTML, SVG, ...
  */
 class QRMarkup extends QROutputAbstract{
 
+	/**
+	 * @var string
+	 */
 	protected $defaultMode = QRCode::OUTPUT_MARKUP_SVG;
 
 	/**
-	 * @return string|bool
+	 * @see \sprintf()
+	 *
+	 * @var string
 	 */
-	protected function html(){
-		$html = '';
+	protected $svgHeader = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" class="qr-svg %1$s" style="width: 100%%; height: auto;" viewBox="0 0 %2$d %2$d">';
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function setModuleValues():void{
+
+		foreach($this::DEFAULT_MODULE_VALUES as $M_TYPE => $defaultValue){
+			$v = $this->options->moduleValues[$M_TYPE] ?? null;
+
+			if(!is_string($v)){
+				$this->moduleValues[$M_TYPE] = $defaultValue
+					? $this->options->markupDark
+					: $this->options->markupLight;
+			}
+			else{
+				$this->moduleValues[$M_TYPE] = trim(strip_tags($v), '\'"');
+			}
+
+		}
+
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function html():string{
+		$html = '<div class="'.$this->options->cssClass.'">'.$this->options->eol;
 
 		foreach($this->matrix->matrix() as $row){
 			$html .= '<div>';
 
-			foreach($row as $pixel){
-				$html .= '<span style="background: '.($this->options->moduleValues[$pixel] ?: 'lightgrey').';"></span>';
+			foreach($row as $M_TYPE){
+				$html .= '<span style="background: '.$this->moduleValues[$M_TYPE].';"></span>';
 			}
 
 			$html .= '</div>'.$this->options->eol;
 		}
+
+		$html .= '</div>'.$this->options->eol;
 
 		if($this->options->cachefile){
 			return '<!DOCTYPE html><head><meta charset="UTF-8"></head><body>'.$this->options->eol.$html.'</body>';
@@ -47,25 +82,17 @@ class QRMarkup extends QROutputAbstract{
 	/**
 	 * @link https://github.com/codemasher/php-qrcode/pull/5
 	 *
-	 * @return string|bool
+	 * @return string
 	 */
-	protected function svg(){
-		$scale  = $this->options->scale;
-		$length = $this->moduleCount * $scale;
+	protected function svg():string{
 		$matrix = $this->matrix->matrix();
 
-		$svg = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="'.$length.'px" height="'.$length.'px">'
+		$svg = sprintf($this->svgHeader, $this->options->cssClass, $this->options->svgViewBoxSize ?? $this->moduleCount)
 		       .$this->options->eol
 		       .'<defs>'.$this->options->svgDefs.'</defs>'
 		       .$this->options->eol;
 
-		foreach($this->options->moduleValues as $M_TYPE => $value){
-
-			// fallback
-			if(is_bool($value)){
-				$value = $value ? '#000' : '#fff';
-			}
-
+		foreach($this->moduleValues as $M_TYPE => $value){
 			$path = '';
 
 			foreach($matrix as $y => $row){
@@ -79,17 +106,17 @@ class QRMarkup extends QROutputAbstract{
 						$count++;
 
 						if($start === null){
-							$start = $x * $scale;
+							$start = $x;
 						}
 
-						if($row[$x + 1] ?? false){
+						if(isset($row[$x + 1])){
 							continue;
 						}
 					}
 
 					if($count > 0){
-						$len = $count * $scale;
-						$path .= 'M' .$start. ' ' .($y * $scale). ' h'.$len.' v'.$scale.' h-'.$len.'Z ';
+						$len = $count;
+						$path .= sprintf('M%s %s h%s v1 h-%sZ ', $start, $y, $len, $len);
 
 						// reset count
 						$count = 0;
@@ -101,7 +128,7 @@ class QRMarkup extends QROutputAbstract{
 			}
 
 			if(!empty($path)){
-				$svg .= '<path class="qr-'.$M_TYPE.' '.$this->options->cssClass.'" stroke="transparent" fill="'.$value.'" fill-opacity="'.$this->options->svgOpacity.'" d="'.$path.'" />';
+				$svg .= sprintf('<path class="qr-%s %s" stroke="transparent" fill="%s" fill-opacity="%s" d="%s" />', $M_TYPE, $this->options->cssClass, $value, $this->options->svgOpacity, $path);
 			}
 
 		}
@@ -112,6 +139,10 @@ class QRMarkup extends QROutputAbstract{
 		// if saving to file, append the correct headers
 		if($this->options->cachefile){
 			return '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'.$this->options->eol.$svg;
+		}
+
+		if($this->options->imageBase64){
+			$svg = sprintf('data:image/svg+xml;base64,%s', base64_encode($svg));
 		}
 
 		return $svg;

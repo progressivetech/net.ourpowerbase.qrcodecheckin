@@ -50,7 +50,7 @@ function qrcodecheckin_civicrm_uninstall() {
   $civiConfig = CRM_Core_Config::singleton();
   $dir = $civiConfig->imageUploadDir . '/qrcodecheckin/';
   if (!file_exists($dir)) {
-    $files = array_diff(scandir($dir), array('.','..'));
+    $files = array_diff(scandir($dir), ['.','..']);
     foreach ($files as $file) {
       if (is_dir("$dir/$file")) {
         // This is an error, but don't let it gum up the removal of the extension.
@@ -171,16 +171,19 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
     if (CRM_Utils_Request::retrieve('snippet', 'String', $form) == 'json') {
       $templatePath = realpath(dirname(__FILE__)."/templates");
       // Add the field element in the form
-      $form->add('checkbox', 'default_qrcode_checkin_event', ts('When generating QR Code tokens, use this Event'));
+      $form->add('checkbox', 'qrcode_enabled_event', ts('Enable QR Code tokens for this Event'));
       // dynamically insert a template block in the page
-      CRM_Core_Region::instance('page-body')->add(array(
+      CRM_Core_Region::instance('page-body')->add([
         'template' => "{$templatePath}/qrcode-checkin-event-options.tpl"
-      ));
+      ]);
 
-      $default_event_setting = civicrm_api3('Setting', 'getvalue', array('name' => 'default_qrcode_checkin_event'));
+      $qrcode_events = \Civi::settings()->get('qrcode_events');
       $event_id = intval($form->getVar('_id'));
-      if ($default_event_setting == $event_id) {
-        $defaults['default_qrcode_checkin_event'] = 1;
+      if (in_array($event_id, $qrcode_events)) {
+        $defaults['qrcode_enabled_event'] = 1;
+      }
+      else {
+        $defaults['qrcode_enabled_event'] = 0;
       }
       $form->setDefaults($defaults);
     }
@@ -197,20 +200,21 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
   if ($formName == 'CRM_Event_Form_ManageEvent_EventInfo') {
     $vals = $form->_submitValues;
     $event_id = intval($form->getVar('_id'));
-    $default_qrcode_checkin_event = array_key_exists('default_qrcode_checkin_event', $vals) ? TRUE : FALSE;
+    $qrcode_enabled_event = array_key_exists('qrcode_enabled_event', $vals) ? TRUE : FALSE;
 
-    // Handle Default setting.
-    $default_event_setting = civicrm_api3('Setting', 'getvalue', array('name' => 'default_qrcode_checkin_event'));
-    if ($default_qrcode_checkin_event) {
-      if ($default_event_setting != $event_id) {
-        // Update
-        civicrm_api3('Setting', 'create', array('default_qrcode_checkin_event' => $event_id));
+    // Add/Remove event ID to/from array of QR-enabled events as required
+    $qrcode_events = \Civi::settings()->get('qrcode_events');
+    if ($qrcode_enabled_event) {
+      // Add event ID to array of QR-enabled
+      if (!in_array($event_id, $qrcode_events)) {
+        $qrcode_events[] = $event_id;
+        \Civi::settings()->set('qrcode_events', $qrcode_events);
       }
     }
-    else {
-      if ($default_event_setting == $event_id) {
-        civicrm_api3('Setting', 'create', array('default_qrcode_checkin_event' => NULL));
-      }
+    else if (in_array($event_id, $qrcode_events)) {
+      // Remove event ID from array
+      $qrcode_events = array_diff($qrcode_events, [$event_id]);
+      \Civi::settings()->set('qrcode_events', $qrcode_events);
     }
   }
 }
@@ -222,13 +226,13 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
 function qrcodecheckin_get_code($participant_id) {
   $sql = "SELECT hash FROM civicrm_contact c JOIN civicrm_participant p ON c.id = p.contact_id
    WHERE p.id = %0";
-  $dao = CRM_Core_DAO::executeQuery($sql, array(0 => array($participant_id, 'Integer')));
+  $dao = CRM_Core_DAO::executeQuery($sql, [0 => [$participant_id, 'Integer']]);
   if ($dao->N == 0) {
     return FALSE;
   }
   $dao->fetch();
   $user_hash = $dao->hash;
-  return hash('sha256', $participant_id + $user_hash + CIVICRM_SITE_KEY);
+  return hash('sha256', $participant_id . $user_hash . CIVICRM_SITE_KEY);
 }
 
 /**
@@ -250,10 +254,10 @@ function qrcodecheckin_get_url($code, $participant_id) {
 function qrcodecheckin_get_image_data($url, $base64 = TRUE) {
   require_once __DIR__ . '/vendor/autoload.php';
   $options = new chillerlan\QRCode\QROptions(
-    array(
+    [
       'outputType' => chillerlan\QRCode\QRCode::OUTPUT_IMAGE_PNG,
       'imageBase64' => $base64 
-    )
+    ]
   );
   return (new chillerlan\QRCode\QRCode($options))->render($url);
 }
@@ -307,27 +311,46 @@ function qrcodecheckin_delete_image($code) {
  */
 function qrcodecheckin_civicrm_permission(&$permissions) {
   $prefix = ts('QR Code Checkin') . ': ';
-  $permissions[QRCODECHECKIN_PERM] = array(
+  $permissions[QRCODECHECKIN_PERM] = [
     $prefix . ts(QRCODECHECKIN_PERM),
     ts('Access the page presented by the QR Code and click to change participant status to attended'),
-  );
+  ];
 }
 
 /**
  * Implements hook_civicrm_tokens.
  */
 function qrcodecheckin_civicrm_tokens(&$tokens) {
-  $tokens['qrcodecheckin'] = array(
-    'qrcodecheckin.qrcode_url' => ts("URL to the QR code image file"),
-    'qrcodecheckin.qrcode_html' => ts("Block of HTML code with both QR code image and link"),
-  );
+  $qrcode_events = \Civi::settings()->get('qrcode_events');
+  if (empty($qrcode_events)) {
+    return;
+  }
+  // There are QR enabled events so let's define tokens for each of them
+  $events = \Civi\Api4\Event::get(FALSE)
+    ->addSelect('id', 'title')
+    ->addClause('OR', ['end_date', 'IS NULL'], ['end_date', '>', date('Y-m-d')])
+    ->addWhere('is_active', '=', TRUE)
+    ->addWhere('id', 'IN', $qrcode_events)
+    ->setLimit(0)
+    ->execute();
+  $customTokens = [];
+  foreach ($events as $event) {
+    $customTokens['qrcodecheckin.qrcode_url_' . $event['id']] = ts('QRCode link for event ' . $event['title']);
+    $customTokens['qrcodecheckin.qrcode_html_' . $event['id']] = ts('QRCode image and link for event ' . $event['title']);
+  }
+  $tokens['qrcodecheckin'] = $customTokens;
 }
 
 /**
  * Implements hook_civicrm_tokenValues.
  */
-function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = array(), $context = null) {
+function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = [], $context = null) {
   if (array_key_exists('qrcodecheckin', $tokens)) {
+    $tokens['qrcodecheckin'];
+    $event_ids = [];
+    foreach ($tokens['qrcodecheckin'] as $token) {
+      $event_ids[] = preg_replace('/\D/', '', $token);
+    }
     foreach($cids as $contact_id) {
       // Allow token values to be overridden by extensions
       $handled = FALSE;
@@ -337,26 +360,28 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
         continue;
       }
 
-      $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id);
-      if ($participant_id) {
-        $code = qrcodecheckin_get_code($participant_id);
-        // First ensure the image file is created.
-        qrcodecheckin_create_image($code, $participant_id);
+      foreach ($event_ids as $event_id) {
+        $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id);
+        if ($participant_id) {
+          $code = qrcodecheckin_get_code($participant_id);
+          // First ensure the image file is created.
+          qrcodecheckin_create_image($code, $participant_id);
 
-        // Get the absolute link to the image that will display the QR code.
-        $query = NULL;
-        $absolute = TRUE;
-        $link = qrcodecheckin_get_image_url($code); 
-
-        $values[$contact_id]['qrcodecheckin.qrcode_url'] = $link;
-        $values[$contact_id]['qrcodecheckin.qrcode_html'] = '<div>' .
-          '<img alt="QR Code with link to checkin page" src="' . $link .
-          '"></div><div>You should see a QR code above which will be used '.
-          'to quickly check you into the event. If you do not see a code '.
-          'display above, please enable the display of images in your email '.
-          'program or try accessing it <a href="' . $link . '">directly</a>. '.
-          'You may want to take a screen grab of your QR Code in case you need '.
-          'to display it when you do not have Internet access.</div>';
+          // Get the absolute link to the image that will display the QR code.
+          $query = NULL;
+          $absolute = TRUE;
+          $link = qrcodecheckin_get_image_url($code); 
+  
+          $values[$contact_id]['qrcodecheckin.qrcode_url_' . $event_id] = $link;
+          $values[$contact_id]['qrcodecheckin.qrcode_html_' . $event_id] = '<div>' .
+            '<img alt="QR Code with link to checkin page" src="' . $link .
+            '"></div><div>You should see a QR code above which will be used '.
+            'to quickly check you into the event. If you do not see a code '.
+            'display above, please enable the display of images in your email '.
+            'program or try accessing it <a href="' . $link . '">directly</a>. '.
+            'You may want to take a screen grab of your QR Code in case you need '.
+            'to display it when you do not have Internet access.</div>';
+        }
       }
     }
   }
@@ -365,19 +390,14 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
 /**
  * Fetch participant_id from contact_id
  */
-function qrcodecheckin_participant_id_for_contact_id($contact_id) {
-  $event_id = civicrm_api3('Setting', 'getvalue', array('name' => 'default_qrcode_checkin_event'));
-  if (!$event_id) {
-    // We haven't set a default event to generate QR Codes. We don't need to crash, just don't return participant ID and qrcode tokens will be blank.
-    return NULL;
-  }
+function qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id) {
 
   $sql = "SELECT p.id FROM civicrm_contact c JOIN civicrm_participant p 
-    ON c.id = p.contact_id WHERE is_deleted = 0 AND c.id = %0 AND p.event_id = %1";
-  $params = array(
-    0 => array($contact_id, 'Integer'),
-    1 => array($event_id, 'Integer')
-  );
+    ON c.id = p.contact_id WHERE c.is_deleted = 0 AND c.id = %0 AND p.event_id = %1";
+  $params = [
+    0 => [$contact_id, 'Integer'],
+    1 => [$event_id, 'Integer']
+  ];
   $dao = CRM_Core_DAO::executeQuery($sql, $params);
   if ($dao->N == 0) {
     return NULL;

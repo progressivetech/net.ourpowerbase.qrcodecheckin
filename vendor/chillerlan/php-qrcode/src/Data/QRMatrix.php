@@ -13,90 +13,162 @@
 namespace chillerlan\QRCode\Data;
 
 use chillerlan\QRCode\QRCode;
+use Closure;
+
+use function array_fill, array_key_exists, array_push, array_unshift, count, floor, in_array, max, min, range;
 
 /**
  * @link http://www.thonky.com/qr-code-tutorial/format-version-information
  */
 class QRMatrix{
 
-	const M_NULL       = 0x00;
-	const M_DARKMODULE = 0x02;
-	const M_DATA       = 0x04;
-	const M_FINDER     = 0x06;
-	const M_SEPARATOR  = 0x08;
-	const M_ALIGNMENT  = 0x0a;
-	const M_TIMING     = 0x0c;
-	const M_FORMAT     = 0x0e;
-	const M_VERSION    = 0x10;
-	const M_QUIETZONE  = 0x12;
-	const M_LOGO       = 0x14; // @todo
+	public const M_NULL       = 0x00;
+	public const M_DARKMODULE = 0x02;
+	public const M_DATA       = 0x04;
+	public const M_FINDER     = 0x06;
+	public const M_SEPARATOR  = 0x08;
+	public const M_ALIGNMENT  = 0x0a;
+	public const M_TIMING     = 0x0c;
+	public const M_FORMAT     = 0x0e;
+	public const M_VERSION    = 0x10;
+	public const M_QUIETZONE  = 0x12;
+	public const M_LOGO       = 0x14;
+	public const M_FINDER_DOT = 0x16;
 
-	const M_TEST       = 0xff;
+	public const M_TEST       = 0xff;
 
 	/**
 	 * @link http://www.thonky.com/qr-code-tutorial/alignment-pattern-locations
+	 *
+	 *  version -> pattern
 	 */
-	const alignmentPattern = [ null, // start at 1
-		[],
-		[6, 18],
-		[6, 22],
-		[6, 26],
-		[6, 30],
-		[6, 34],
-		[6, 22, 38],
-		[6, 24, 42],
-		[6, 26, 46],
-		[6, 28, 50],
-		[6, 30, 54],
-		[6, 32, 58],
-		[6, 34, 62],
-		[6, 26, 46, 66],
-		[6, 26, 48, 70],
-		[6, 26, 50, 74],
-		[6, 30, 54, 78],
-		[6, 30, 56, 82],
-		[6, 30, 58, 86],
-		[6, 34, 62, 90],
-		[6, 28, 50, 72,  94],
-		[6, 26, 50, 74,  98],
-		[6, 30, 54, 78, 102],
-		[6, 28, 54, 80, 106],
-		[6, 32, 58, 84, 110],
-		[6, 30, 58, 86, 114],
-		[6, 34, 62, 90, 118],
-		[6, 26, 50, 74,  98, 122],
-		[6, 30, 54, 78, 102, 126],
-		[6, 26, 52, 78, 104, 130],
-		[6, 30, 56, 82, 108, 134],
-		[6, 34, 60, 86, 112, 138],
-		[6, 30, 58, 86, 114, 142],
-		[6, 34, 62, 90, 118, 146],
-		[6, 30, 54, 78, 102, 126, 150],
-		[6, 24, 50, 76, 102, 128, 154],
-		[6, 28, 54, 80, 106, 132, 158],
-		[6, 32, 58, 84, 110, 136, 162],
-		[6, 26, 54, 82, 110, 138, 166],
-		[6, 30, 58, 86, 114, 142, 170],
+	protected const alignmentPattern = [
+		1  => [],
+		2  => [6, 18],
+		3  => [6, 22],
+		4  => [6, 26],
+		5  => [6, 30],
+		6  => [6, 34],
+		7  => [6, 22, 38],
+		8  => [6, 24, 42],
+		9  => [6, 26, 46],
+		10 => [6, 28, 50],
+		11 => [6, 30, 54],
+		12 => [6, 32, 58],
+		13 => [6, 34, 62],
+		14 => [6, 26, 46, 66],
+		15 => [6, 26, 48, 70],
+		16 => [6, 26, 50, 74],
+		17 => [6, 30, 54, 78],
+		18 => [6, 30, 56, 82],
+		19 => [6, 30, 58, 86],
+		20 => [6, 34, 62, 90],
+		21 => [6, 28, 50, 72,  94],
+		22 => [6, 26, 50, 74,  98],
+		23 => [6, 30, 54, 78, 102],
+		24 => [6, 28, 54, 80, 106],
+		25 => [6, 32, 58, 84, 110],
+		26 => [6, 30, 58, 86, 114],
+		27 => [6, 34, 62, 90, 118],
+		28 => [6, 26, 50, 74,  98, 122],
+		29 => [6, 30, 54, 78, 102, 126],
+		30 => [6, 26, 52, 78, 104, 130],
+		31 => [6, 30, 56, 82, 108, 134],
+		32 => [6, 34, 60, 86, 112, 138],
+		33 => [6, 30, 58, 86, 114, 142],
+		34 => [6, 34, 62, 90, 118, 146],
+		35 => [6, 30, 54, 78, 102, 126, 150],
+		36 => [6, 24, 50, 76, 102, 128, 154],
+		37 => [6, 28, 54, 80, 106, 132, 158],
+		38 => [6, 32, 58, 84, 110, 136, 162],
+		39 => [6, 26, 54, 82, 110, 138, 166],
+		40 => [6, 30, 58, 86, 114, 142, 170],
 	];
 
 	/**
 	 * @link http://www.thonky.com/qr-code-tutorial/format-version-tables
+	 *
+	 * no version pattern for QR Codes < 7
 	 */
-	const versionPattern = [
-		// 1-based version index
-		null,
-		// no version pattern for QR Codes < 7
-		null   , null   , null   , null   , null   , null   , 0x07c94, 0x085bc, 0x09a99, 0x0a4d3,
-		0x0bbf6, 0x0c762, 0x0d847, 0x0e60d, 0x0f928, 0x10b78, 0x1145d, 0x12a17, 0x13532, 0x149a6,
-		0x15683, 0x168c9, 0x177ec, 0x18ec4, 0x191e1, 0x1afab, 0x1b08e, 0x1cc1a, 0x1d33f, 0x1ed75,
-		0x1f250, 0x209d5, 0x216f0, 0x228ba, 0x2379f, 0x24b0b, 0x2542e, 0x26a64, 0x27541, 0x28c69,
+	protected const versionPattern = [
+		7  => 0b000111110010010100,
+		8  => 0b001000010110111100,
+		9  => 0b001001101010011001,
+		10 => 0b001010010011010011,
+		11 => 0b001011101111110110,
+		12 => 0b001100011101100010,
+		13 => 0b001101100001000111,
+		14 => 0b001110011000001101,
+		15 => 0b001111100100101000,
+		16 => 0b010000101101111000,
+		17 => 0b010001010001011101,
+		18 => 0b010010101000010111,
+		19 => 0b010011010100110010,
+		20 => 0b010100100110100110,
+		21 => 0b010101011010000011,
+		22 => 0b010110100011001001,
+		23 => 0b010111011111101100,
+		24 => 0b011000111011000100,
+		25 => 0b011001000111100001,
+		26 => 0b011010111110101011,
+		27 => 0b011011000010001110,
+		28 => 0b011100110000011010,
+		29 => 0b011101001100111111,
+		30 => 0b011110110101110101,
+		31 => 0b011111001001010000,
+		32 => 0b100000100111010101,
+		33 => 0b100001011011110000,
+		34 => 0b100010100010111010,
+		35 => 0b100011011110011111,
+		36 => 0b100100101100001011,
+		37 => 0b100101010000101110,
+		38 => 0b100110101001100100,
+		39 => 0b100111010101000001,
+		40 => 0b101000110001101001,
 	];
 
-	const formatPattern = [
-		[0x77c4, 0x72f3, 0x7daa, 0x789d, 0x662f, 0x6318, 0x6c41, 0x6976], // L
-		[0x5412, 0x5125, 0x5e7c, 0x5b4b, 0x45f9, 0x40ce, 0x4f97, 0x4aa0], // M
-		[0x355f, 0x3068, 0x3f31, 0x3a06, 0x24b4, 0x2183, 0x2eda, 0x2bed], // Q
-		[0x1689, 0x13be, 0x1ce7, 0x19d0, 0x0762, 0x0255, 0x0d0c, 0x083b], // H
+	// ECC level -> mask pattern
+	protected const formatPattern = [
+		[ // L
+			0b111011111000100,
+			0b111001011110011,
+			0b111110110101010,
+			0b111100010011101,
+			0b110011000101111,
+			0b110001100011000,
+			0b110110001000001,
+			0b110100101110110,
+		],
+		[ // M
+			0b101010000010010,
+			0b101000100100101,
+			0b101111001111100,
+			0b101101101001011,
+			0b100010111111001,
+			0b100000011001110,
+			0b100111110010111,
+			0b100101010100000,
+		],
+		[ // Q
+			0b011010101011111,
+			0b011000001101000,
+			0b011111100110001,
+			0b011101000000110,
+			0b010010010110100,
+			0b010000110000011,
+			0b010111011011010,
+			0b010101111101101,
+		],
+		[ // H
+			0b001011010001001,
+			0b001001110111110,
+			0b001110011100111,
+			0b001100111010000,
+			0b000011101100010,
+			0b000001001010101,
+			0b000110100001100,
+			0b000100000111011,
+		],
 	];
 
 	/**
@@ -149,30 +221,47 @@ class QRMatrix{
 	}
 
 	/**
-	 * @return array
+	 * Returns the data matrix, returns a pure boolean representation if $boolean is set to true
+	 *
+	 * @return int[][]|bool[][]
 	 */
-	public function matrix():array {
-		return $this->matrix;
+	public function matrix(bool $boolean = false):array{
+
+		if(!$boolean){
+			return $this->matrix;
+		}
+
+		$matrix = [];
+
+		foreach($this->matrix as $y => $row){
+			$matrix[$y] = [];
+
+			foreach($row as $x => $val){
+				$matrix[$y][$x] = ($val >> 8) > 0;
+			}
+		}
+
+		return $matrix;
 	}
 
 	/**
 	 * @return int
 	 */
-	public function version():int {
+	public function version():int{
 		return $this->version;
 	}
 
 	/**
 	 * @return int
 	 */
-	public function eccLevel():int {
+	public function eccLevel():int{
 		return $this->eclevel;
 	}
 
 	/**
 	 * @return int
 	 */
-	public function maskPattern():int {
+	public function maskPattern():int{
 		return $this->maskPattern;
 	}
 
@@ -264,12 +353,18 @@ class QRMatrix{
 		foreach($pos as $c){
 			for($y = 0; $y < 7; $y++){
 				for($x = 0; $x < 7; $x++){
-					$this->set(
-						$c[0] + $y,
-						$c[1] + $x,
-						!(($x > 0 && $x < 6 && ($y === 1 || $y === 5)) || ($y > 0 && $y < 6 && ($x === 1 || $x === 5))),
-						$this::M_FINDER
-					);
+					// outer (dark) 7*7 square
+					if($x === 0 || $x === 6 || $y === 0 || $y === 6){
+						$this->set($c[0] + $y, $c[1] + $x, true, $this::M_FINDER);
+					}
+					// inner (light) 5*5 square
+					elseif($x === 1 || $x === 5 || $y === 1 || $y === 5){
+						$this->set($c[0] + $y, $c[1] + $x, false, $this::M_FINDER);
+					}
+					// 3*3 dot
+					else{
+						$this->set($c[0] + $y, $c[1] + $x, true, $this::M_FINDER_DOT);
+					}
 				}
 			}
 		}
@@ -313,10 +408,9 @@ class QRMatrix{
 	 * @return \chillerlan\QRCode\Data\QRMatrix
 	 */
 	public function setAlignmentPattern():QRMatrix{
-		$pattern = $this::alignmentPattern[$this->version];
 
-		foreach($pattern as $y){
-			foreach($pattern as $x){
+		foreach($this::alignmentPattern[$this->version] as $y){
+			foreach($this::alignmentPattern[$this->version] as $x){
 
 				// skip existing patterns
 				if($this->matrix[$y][$x] !== $this::M_NULL){
@@ -368,7 +462,6 @@ class QRMatrix{
 	 * @return \chillerlan\QRCode\Data\QRMatrix
 	 */
 	public function setVersionNumber(bool $test = null):QRMatrix{
-		$test = $test ?? false;
 		$bits = $this::versionPattern[$this->version] ?? false;
 
 		if($bits !== false){
@@ -396,36 +489,34 @@ class QRMatrix{
 	 * @return \chillerlan\QRCode\Data\QRMatrix
 	 */
 	public function setFormatInfo(int $maskPattern, bool $test = null):QRMatrix{
-		$test = $test ?? false;
 		$bits = $this::formatPattern[QRCode::ECC_MODES[$this->eclevel]][$maskPattern] ?? 0;
-		$t    = $this::M_FORMAT;
 
 		for($i = 0; $i < 15; $i++){
 			$v = !$test && (($bits >> $i) & 1) === 1;
 
 			if($i < 6){
-				$this->set(8, $i, $v, $t);
+				$this->set(8, $i, $v, $this::M_FORMAT);
 			}
 			elseif($i < 8){
-				$this->set(8, $i + 1, $v, $t);
+				$this->set(8, $i + 1, $v, $this::M_FORMAT);
 			}
 			else{
-				$this->set(8, $this->moduleCount - 15 + $i, $v, $t);
+				$this->set(8, $this->moduleCount - 15 + $i, $v, $this::M_FORMAT);
 			}
 
 			if($i < 8){
-				$this->set($this->moduleCount - $i - 1, 8, $v, $t);
+				$this->set($this->moduleCount - $i - 1, 8, $v, $this::M_FORMAT);
 			}
 			elseif($i < 9){
-				$this->set(15 - $i, 8, $v, $t);
+				$this->set(15 - $i, 8, $v, $this::M_FORMAT);
 			}
 			else{
-				$this->set(15 - $i - 1, 8, $v, $t);
+				$this->set(15 - $i - 1, 8, $v, $this::M_FORMAT);
 			}
 
 		}
 
-		$this->set(8, $this->moduleCount - 8, !$test, $t);
+		$this->set(8, $this->moduleCount - 8, !$test, $this::M_FORMAT);
 
 		return $this;
 	}
@@ -444,22 +535,100 @@ class QRMatrix{
 			throw new QRCodeDataException('use only after writing data');
 		}
 
-		$size = $size !== null ? max(0, min($size, floor($this->moduleCount / 2))) : 4;
-		$t    = $this::M_QUIETZONE;
+		$size = $size !== null
+			? max(0, min($size, floor($this->moduleCount / 2)))
+			: 4;
 
 		for($y = 0; $y < $this->moduleCount; $y++){
 			for($i = 0; $i < $size; $i++){
-				array_unshift($this->matrix[$y], $t);
-				array_push($this->matrix[$y], $t);
+				array_unshift($this->matrix[$y], $this::M_QUIETZONE);
+				array_push($this->matrix[$y], $this::M_QUIETZONE);
 			}
 		}
 
 		$this->moduleCount += ($size * 2);
-		$r                 = array_fill(0, $this->moduleCount, $t);
+
+		$r = array_fill(0, $this->moduleCount, $this::M_QUIETZONE);
 
 		for($i = 0; $i < $size; $i++){
 			array_unshift($this->matrix, $r);
 			array_push($this->matrix, $r);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Clears a space of $width * $height in order to add a logo or text.
+	 *
+	 * Additionally, the logo space can be positioned within the QR Code - respecting the main functional patterns -
+	 * using $startX and $startY. If either of these are null, the logo space will be centered in that direction.
+	 * ECC level "H" (30%) is required.
+	 *
+	 * Please note that adding a logo space minimizes the error correction capacity of the QR Code and
+	 * created images may become unreadable, especially when printed with a chance to receive damage.
+	 * Please test thoroughly before using this feature in production.
+	 *
+	 * This method should be called from within an output module (after the matrix has been filled with data).
+	 * Note that there is no restiction on how many times this method could be called on the same matrix instance.
+	 *
+	 * @link https://github.com/chillerlan/php-qrcode/issues/52
+	 *
+	 * @param int      $width
+	 * @param int      $height
+	 * @param int|null $startX
+	 * @param int|null $startY
+	 *
+	 * @return \chillerlan\QRCode\Data\QRMatrix
+	 * @throws \chillerlan\QRCode\Data\QRCodeDataException
+	 */
+	public function setLogoSpace(int $width, int $height, int $startX = null, int $startY = null):QRMatrix{
+
+		// for logos we operate in ECC H (30%) only
+		if($this->eclevel !== 0b10){
+			throw new QRCodeDataException('ECC level "H" required to add logo space');
+		}
+
+		// we need uneven sizes, adjust if needed
+		if(($width % 2) === 0){
+			$width++;
+		}
+
+		if(($height % 2) === 0){
+			$height++;
+		}
+
+		// $this->moduleCount includes the quiet zone (if created), we need the QR size here
+		$length = $this->version * 4 + 17;
+
+		// throw if the logo space exceeds the maximum error correction capacity
+		if($width * $height > floor($length * $length * 0.2)){
+			throw new QRCodeDataException('logo space exceeds the maximum error correction capacity');
+		}
+
+		// quiet zone size
+		$qz    = ($this->moduleCount - $length) / 2;
+		// skip quiet zone and the first 9 rows/columns (finder-, mode-, version- and timing patterns)
+		$start = $qz + 9;
+		// skip quiet zone
+		$end   = $this->moduleCount - $qz;
+
+		// determine start coordinates
+		$startX = ($startX !== null ? $startX : ($length - $width) / 2) + $qz;
+		$startY = ($startY !== null ? $startY : ($length - $height) / 2) + $qz;
+
+		// clear the space
+		foreach($this->matrix as $y => $row){
+			foreach($row as $x => $val){
+				// out of bounds, skip
+				if($x < $start || $y < $start ||$x >= $end || $y >= $end){
+					continue;
+				}
+				// a match
+				if($x >= $startX && $x < ($startX + $width) && $y >= $startY && $y < ($startY + $height)){
+					$this->set($x, $y, false, $this::M_LOGO);
+				}
+			}
 		}
 
 		return $this;
@@ -479,6 +648,7 @@ class QRMatrix{
 		$this->maskPattern = $maskPattern;
 		$byteCount         = count($data);
 		$size              = $this->moduleCount - 1;
+		$mask              = $this->getMask($this->maskPattern);
 
 		for($i = $size, $y = $size, $inc = -1, $byteIndex = 0, $bitIndex  = 7; $i > 0; $i -= 2){
 
@@ -497,7 +667,7 @@ class QRMatrix{
 							$v = (($data[$byteIndex] >> $bitIndex) & 1) === 1;
 						}
 
-						if($this->getMask($x, $y, $maskPattern) === 0){
+						if($mask($x, $y) === 0){
 							$v = !$v;
 						}
 
@@ -528,36 +698,36 @@ class QRMatrix{
 	}
 
 	/**
+	 * ISO/IEC 18004:2000 Section 8.8.1
+	 *
+	 * Note that some versions of the QR code standard have had errors in the section about mask patterns.
+	 * The information below has been corrected. (https://www.thonky.com/qr-code-tutorial/mask-patterns)
+	 *
 	 * @see \chillerlan\QRCode\QRMatrix::mapData()
 	 *
 	 * @internal
 	 *
-	 * @param int $x
-	 * @param int $y
 	 * @param int $maskPattern
 	 *
-	 * @return int
+	 * @return \Closure
 	 * @throws \chillerlan\QRCode\Data\QRCodeDataException
 	 */
-	protected function getMask(int $x, int $y, int $maskPattern):int {
-		$a = $y + $x;
-		$m = $y * $x;
+	protected function getMask(int $maskPattern):Closure{
 
-		if($maskPattern >= 0 && $maskPattern < 8){
-			// this is literally the same as the stupid switch...
-			return [
-				$a % 2,
-				$y % 2,
-				$x % 3,
-				$a % 3,
-				(floor($y / 2) + floor($x / 3)) % 2,
-				$m % 2 + $m % 3,
-				($m % 2 + $m % 3) % 2,
-				($m % 3 + $a % 2) % 2
-			][$maskPattern];
+		if((0b111 & $maskPattern) !== $maskPattern){
+			throw new QRCodeDataException('invalid mask pattern'); // @codeCoverageIgnore
 		}
 
-		throw new QRCodeDataException('invalid mask pattern'); // @codeCoverageIgnore
+		return [
+			0b000 => function($x, $y):int{ return ($x + $y) % 2; },
+			0b001 => function($x, $y):int{ return $y % 2; },
+			0b010 => function($x, $y):int{ return $x % 3; },
+			0b011 => function($x, $y):int{ return ($x + $y) % 3; },
+			0b100 => function($x, $y):int{ return ((int)($y / 2) + (int)($x / 3)) % 2; },
+			0b101 => function($x, $y):int{ return (($x * $y) % 2) + (($x * $y) % 3); },
+			0b110 => function($x, $y):int{ return ((($x * $y) % 2) + (($x * $y) % 3)) % 2; },
+			0b111 => function($x, $y):int{ return ((($x * $y) % 3) + (($x + $y) % 2)) % 2; },
+		][$maskPattern];
 	}
 
 }

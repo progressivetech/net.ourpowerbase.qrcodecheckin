@@ -19,11 +19,15 @@ Once enabled, each event configuration screen will have a new checkbox underneat
 
 ![Checkbox to enable QR Code checkin for this event](/images/qrcode-event-configuration.png)
 
-This setting can only be set on one event at a time.
+This setting can be set on any number of events at a time.
 
 After setting the checkbox for your event, search for all contacts that are registered for the event and place them in a group.
 
-Then, send an email to the group, that includes the qrcodecheckin.qrcode_img token:
+Then, send an email to the group, that includes the QR Code image token. There will be a token for each QR Code-enabled event that:
+
+ * is set to active
+ * allows online registration
+ * has a start date later than "now" (ie. at the time of composing your email)
 
 ![Same email that include QR Code checkin token](/images/qrcode-compose-email.png)
 
@@ -59,21 +63,31 @@ If they have any other status, it will be displayed in red:
 
 ## Tokens
 
-* qrcodecheckin.qrcode_html - An HTML block to embed into your email containing the QRCode image and supporting text.
-* qrcodecheckin.qrcode_url - contains the direct URL to the QRCode image on the server.
+Tokens are generated for each event configured to use QR Codes. There are two tokens per event you can use:
+* qrcodecheckin.qrcode_html_<eventID> - An HTML block to embed into your email containing the QRCode image and supporting text.
+* qrcodecheckin.qrcode_url_<eventID> - contains the direct URL to the QRCode image on the server.
+
+When composing your email the tokens are searchable by your event's name (you don't need to know the event ID).
 
 ## Changing contents of QRCode / Tokens
 
 If you wish to override the values of the qrcode tokens / change the contents of the QR Code you can implement 
-`hook_civicrm_qrcodecheckin_tokenValues`:
+`hook_civicrm_qrcodecheckin_tokenValues`. You'll need to iterate through an array of possible tokens as they are dynamically
+determined by virtue of the events that have QR support enabled.
 
 eg.
 ```
 function myextension_civicrm_qrcodecheckin_tokenValues(&$values, $contact_id, &$handled) {
-  $link = 'http://example.org/qrcodes/myqrcode.png';
-  $values['qrcodecheckin.qrcode_url'] = $link;
-  $values['qrcodecheckin.qrcode_html'] = '<p>'. 
-    <img alt="QR Code with participant details" src="' . $link . '">Overridden HTML</p>
+  foreach ($values as $key => $value) {
+    $event_id = preg_replace('/\D/', '', $key);
+    $link = 'http://example.org/qrcodes/' . $event_id . '/' . $contact_id . '/myqrcode.png';
+    if (strpos($key, 'url')) {
+      $value = $link;
+    }
+    else {
+      $value = '<p><img alt="QR Code with participant details" src="' . $link . '">Overirrden HTML</p>';
+    }
+  }
   // If we handled the generation of the QRCode and URL set $handled=TRUE
   $handled = TRUE;
 }
@@ -82,8 +96,8 @@ function myextension_civicrm_qrcodecheckin_tokenValues(&$values, $contact_id, &$
 
 ## Requirements
 
-* PHP v5.4+
-* CiviCRM 4.7 
+* PHP v7.2+
+* CiviCRM 5 
 
 ## Installation (Web UI)
 

@@ -1,4 +1,5 @@
-docs
-vendor
-.idea
-tests/Output/output_test.*
+.build/*
+.idea/*
+vendor/*
+composer.lock
+*.phpunit.result.cache

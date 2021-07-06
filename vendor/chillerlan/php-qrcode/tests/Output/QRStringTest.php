@@ -12,8 +12,7 @@
 
 namespace chillerlan\QRCodeTest\Output;
 
-use chillerlan\QRCode\Output\QRString;
-use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\{QRCode, Output\QRString};
 
 class QRStringTest extends QROutputTestAbstract{
 
@@ -21,8 +20,8 @@ class QRStringTest extends QROutputTestAbstract{
 
 	public function types(){
 		return [
-			[QRCode::OUTPUT_STRING_JSON],
-			[QRCode::OUTPUT_STRING_TEXT],
+			'json' => [QRCode::OUTPUT_STRING_JSON],
+			'text' => [QRCode::OUTPUT_STRING_TEXT],
 		];
 	}
 
@@ -37,6 +36,21 @@ class QRStringTest extends QROutputTestAbstract{
 		$data = $this->outputInterface->dump();
 
 		$this->assertSame($data, file_get_contents($this->options->cachefile));
+	}
+
+	public function testSetModuleValues(){
+
+		$this->options->moduleValues = [
+			// data
+			1024 => 'A',
+			4    => 'B',
+		];
+
+		$this->setOutputInterface();
+		$data = $this->outputInterface->dump();
+
+		$this->assertStringContainsString('A', $data);
+		$this->assertStringContainsString('B', $data);
 	}
 
 }

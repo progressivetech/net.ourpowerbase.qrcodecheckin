@@ -12,7 +12,7 @@
 
 namespace chillerlan\QRCode;
 
-use chillerlan\Traits\ContainerAbstract;
+use chillerlan\Settings\SettingsContainerAbstract;
 
 /**
  * @property int    $version
@@ -23,6 +23,7 @@ use chillerlan\Traits\ContainerAbstract;
  * @property bool   $addQuietzone
  * @property bool   $quietzoneSize
  *
+ * @property string $dataMode
  * @property string $outputType
  * @property string $outputInterface
  * @property string $cachefile
@@ -33,18 +34,28 @@ use chillerlan\Traits\ContainerAbstract;
  * @property string $cssClass
  * @property string $svgOpacity
  * @property string $svgDefs
+ * @property int    $svgViewBoxSize
  *
  * @property string $textDark
  * @property string $textLight
  *
+ * @property string $markupDark
+ * @property string $markupLight
+ *
+ * @property bool   $returnResource
  * @property bool   $imageBase64
  * @property bool   $imageTransparent
  * @property array  $imageTransparencyBG
  * @property int    $pngCompression
  * @property int    $jpegQuality
  *
+ * @property string $imagickFormat
+ * @property string $imagickBG
+ *
+ * @property string $fpdfMeasureUnit
+ *
  * @property array  $moduleValues
  */
-class QROptions extends ContainerAbstract{
+class QROptions extends SettingsContainerAbstract{
 	use QROptionsTrait;
 }

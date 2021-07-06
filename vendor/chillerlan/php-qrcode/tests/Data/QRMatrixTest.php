@@ -12,9 +12,11 @@
 
 namespace chillerlan\QRCodeTest\Data;
 
-use chillerlan\QRCode\Data\QRMatrix;
 use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Data\{QRCodeDataException, QRMatrix};
 use chillerlan\QRCodeTest\QRTestAbstract;
+use ReflectionClass;
 
 class QRMatrixTest extends QRTestAbstract{
 
@@ -23,69 +25,27 @@ class QRMatrixTest extends QRTestAbstract{
 	protected $version = 7;
 
 	/**
-	 * @link http://www.thonky.com/qr-code-tutorial/format-version-tables
-	 */
-	const VERSION_REF = [
-		7  => '000111110010010100',
-		8  => '001000010110111100',
-		9  => '001001101010011001',
-		10 => '001010010011010011',
-		11 => '001011101111110110',
-		12 => '001100011101100010',
-		13 => '001101100001000111',
-		14 => '001110011000001101',
-		15 => '001111100100101000',
-		16 => '010000101101111000',
-		17 => '010001010001011101',
-		18 => '010010101000010111',
-		19 => '010011010100110010',
-		20 => '010100100110100110',
-		21 => '010101011010000011',
-		22 => '010110100011001001',
-		23 => '010111011111101100',
-		24 => '011000111011000100',
-		25 => '011001000111100001',
-		26 => '011010111110101011',
-		27 => '011011000010001110',
-		28 => '011100110000011010',
-		29 => '011101001100111111',
-		30 => '011110110101110101',
-		31 => '011111001001010000',
-		32 => '100000100111010101',
-		33 => '100001011011110000',
-		34 => '100010100010111010',
-		35 => '100011011110011111',
-		36 => '100100101100001011',
-		37 => '100101010000101110',
-		38 => '100110101001100100',
-		39 => '100111010101000001',
-		40 => '101000110001101001'
-	];
-
-	/**
 	 * @var \chillerlan\QRCode\Data\QRMatrix
 	 */
 	protected $matrix;
 
-	protected function setUp(){
+	protected function setUp():void{
 		parent::setUp();
 
 		$this->matrix = $this->reflection->newInstanceArgs([$this->version, QRCode::ECC_L]);
 	}
 
-	/**
-	 * @expectedException \chillerlan\QRCode\Data\QRCodeDataException
-	 * @expectedExceptionMessage invalid QR Code version
-	 */
 	public function testInvalidVersionException(){
+		$this->expectException(QRCodeDataException::class);
+		$this->expectExceptionMessage('invalid QR Code version');
+
 		$this->reflection->newInstanceArgs([42, 0]);
 	}
 
-	/**
-	 * @expectedException \chillerlan\QRCode\Data\QRCodeDataException
-	 * @expectedExceptionMessage invalid ecc level
-	 */
 	public function testInvalidEccException(){
+		$this->expectException(QRCodeDataException::class);
+		$this->expectExceptionMessage('invalid ecc level');
+
 		$this->reflection->newInstanceArgs([1, 42]);
 	}
 
@@ -99,15 +59,6 @@ class QRMatrixTest extends QRTestAbstract{
 
 	public function testVersion(){
 		$this->assertSame($this->version, $this->matrix->version());
-	}
-
-	public function testVersionPattern() {
-		foreach (self::VERSION_REF as $version => $mask) {
-			$hexRef = base_convert(self::VERSION_REF[$version],2 ,16);
-			$hexImpl = dechex(QRMatrix::versionPattern[$version]);
-
-			$this->assertEquals($hexRef, $hexImpl);
-		}
 	}
 
 	public function testECC(){
@@ -157,7 +108,7 @@ class QRMatrixTest extends QRTestAbstract{
 			->setAlignmentPattern()
 		;
 
-		$alignmentPattern = QRMatrix::alignmentPattern[$this->version];
+		$alignmentPattern = (new ReflectionClass(QRMatrix::class))->getConstant('alignmentPattern')[$this->version];
 
 		foreach($alignmentPattern as $py){
 			foreach($alignmentPattern as $px){
@@ -234,12 +185,76 @@ class QRMatrixTest extends QRTestAbstract{
 		$this->assertSame(QRMatrix::M_TEST << 8, $this->matrix->get($size - 1 - $q, $size - 1 - $q));
 	}
 
-	/**
-	 * @expectedException \chillerlan\QRCode\Data\QRCodeDataException
-	 * @expectedExceptionMessage use only after writing data
-	 */
 	public function testSetQuietZoneException(){
+		$this->expectException(QRCodeDataException::class);
+		$this->expectExceptionMessage('use only after writing data');
+
 		$this->matrix->setQuietZone();
+	}
+
+	public function testSetLogoSpaceOrientation():void{
+		$o = new QROptions;
+		$o->version      = 10;
+		$o->eccLevel     = QRCode::ECC_H;
+		$o->addQuietzone = false;
+
+		$matrix = (new QRCode($o))->getMatrix('testdata');
+		// also testing size adjustment to uneven numbers
+		$matrix->setLogoSpace(20, 14);
+
+		// NW corner
+		$this::assertNotSame(QRMatrix::M_LOGO, $matrix->get(17, 20));
+		$this::assertSame(QRMatrix::M_LOGO, $matrix->get(18, 21));
+
+		// SE corner
+		$this::assertSame(QRMatrix::M_LOGO, $matrix->get(38, 35));
+		$this::assertNotSame(QRMatrix::M_LOGO, $matrix->get(39, 36));
+	}
+
+	public function testSetLogoSpacePosition():void{
+		$o = new QROptions;
+		$o->version       = 10;
+		$o->eccLevel      = QRCode::ECC_H;
+		$o->addQuietzone  = true;
+		$o->quietzoneSize = 10;
+
+		$m = (new QRCode($o))->getMatrix('testdata');
+
+		// logo space should not overwrite quiet zone & function patterns
+		$m->setLogoSpace(21, 21, -10, -10);
+		$this::assertSame(QRMatrix::M_QUIETZONE, $m->get(9, 9));
+		$this::assertSame(QRMatrix::M_FINDER << 8, $m->get(10, 10));
+		$this::assertSame(QRMatrix::M_FINDER << 8, $m->get(16, 16));
+		$this::assertSame(QRMatrix::M_SEPARATOR, $m->get(17, 17));
+		$this::assertSame(QRMatrix::M_FORMAT << 8, $m->get(18, 18));
+		$this::assertSame(QRMatrix::M_LOGO, $m->get(19, 19));
+		$this::assertSame(QRMatrix::M_LOGO, $m->get(20, 20));
+		$this::assertNotSame(QRMatrix::M_LOGO, $m->get(21, 21));
+
+		// i just realized that setLogoSpace() could be called multiple times
+		// on the same instance and i'm not going to do anything about it :P
+		$m->setLogoSpace(21, 21, 45, 45);
+		$this::assertNotSame(QRMatrix::M_LOGO, $m->get(54, 54));
+		$this::assertSame(QRMatrix::M_LOGO, $m->get(55, 55));
+		$this::assertSame(QRMatrix::M_QUIETZONE, $m->get(67, 67));
+	}
+
+	public function testSetLogoSpaceInvalidEccException():void{
+		$this->expectException(QRCodeDataException::class);
+		$this->expectExceptionMessage('ECC level "H" required to add logo space');
+
+		(new QRCode)->getMatrix('testdata')->setLogoSpace(50, 50);
+	}
+
+	public function testSetLogoSpaceMaxSizeException():void{
+		$this->expectException(QRCodeDataException::class);
+		$this->expectExceptionMessage('logo space exceeds the maximum error correction capacity');
+
+		$o = new QROptions;
+		$o->version  = 5;
+		$o->eccLevel = QRCode::ECC_H;
+
+		(new QRCode($o))->getMatrix('testdata')->setLogoSpace(50, 50);
 	}
 
 }

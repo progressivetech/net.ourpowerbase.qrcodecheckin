@@ -12,8 +12,7 @@
 
 namespace chillerlan\QRCodeTest\Helpers;
 
-use chillerlan\QRCode\Helpers\BitBuffer;
-use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\{QRCode, Helpers\BitBuffer};
 use chillerlan\QRCodeTest\QRTestAbstract;
 
 class BitBufferTest extends QRTestAbstract{
@@ -23,16 +22,16 @@ class BitBufferTest extends QRTestAbstract{
 	 */
 	protected $bitBuffer;
 
-	protected function setUp(){
+	protected function setUp():void{
 		$this->bitBuffer = new BitBuffer;
 	}
 
 	public function bitProvider(){
 		return [
-			[QRCode::DATA_NUMBER, 16],
-			[QRCode::DATA_ALPHANUM, 32],
-			[QRCode::DATA_BYTE, 64],
-			[QRCode::DATA_KANJI, 128],
+			'number'   => [QRCode::DATA_NUMBER, 16],
+			'alphanum' => [QRCode::DATA_ALPHANUM, 32],
+			'byte'     => [QRCode::DATA_BYTE, 64],
+			'kanji'    => [QRCode::DATA_KANJI, 128],
 		];
 	}
 

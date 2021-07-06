@@ -14,12 +14,12 @@ namespace chillerlan\QRCode\Data;
 
 use chillerlan\QRCode\QRCode;
 
+use function ord, sprintf, substr;
+
 /**
  * Numeric mode: decimal digits 0 through 9
  */
 class Number extends QRDataAbstract{
-
-	const CHAR_MAP = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 	/**
 	 * @inheritdoc
@@ -34,7 +34,7 @@ class Number extends QRDataAbstract{
 	/**
 	 * @inheritdoc
 	 */
-	protected function write(string $data){
+	protected function write(string $data):void{
 		$i = 0;
 
 		while($i + 2 < $this->strlen){
@@ -47,11 +47,9 @@ class Number extends QRDataAbstract{
 			if($this->strlen - $i === 1){
 				$this->bitBuffer->put($this->parseInt(substr($data, $i, $i + 1)), 4);
 			}
-			// @codeCoverageIgnoreStart
 			elseif($this->strlen - $i === 2){
 				$this->bitBuffer->put($this->parseInt(substr($data, $i, $i + 2)), 7);
 			}
-			// @codeCoverageIgnoreEnd
 
 		}
 
@@ -63,19 +61,18 @@ class Number extends QRDataAbstract{
 	 * @return int
 	 * @throws \chillerlan\QRCode\Data\QRCodeDataException
 	 */
-	protected function parseInt(string $string):int {
+	protected function parseInt(string $string):int{
 		$num = 0;
 
 		$len = strlen($string);
 		for($i = 0; $i < $len; $i++){
 			$c = ord($string[$i]);
 
-			if(!in_array($string[$i], $this::CHAR_MAP, true)){
-				throw new QRCodeDataException('illegal char: "'.$string[$i].'" ['.$c.']');
+			if(!in_array($string[$i], $this::NUMBER_CHAR_MAP, true)){
+				throw new QRCodeDataException(sprintf('illegal char: "%s" [%d]', $string[$i], $c));
 			}
 
-			$c = $c - ord('0');
-
+			$c   = $c - 48; // ord('0')
 			$num = $num * 10 + $c;
 		}
 

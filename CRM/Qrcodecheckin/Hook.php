@@ -18,7 +18,7 @@ class CRM_Qrcodecheckin_Hook {
    */
   public static function tokenValues(&$values, $contactId, &$handled) {
     return CRM_Utils_Hook::singleton()
-      ->invoke(3, $values, $contactId, $handled, CRM_Utils_Hook::$_nullObject,
+      ->invoke(['values', 'contactId', 'handled'], $values, $contactId, $handled, CRM_Utils_Hook::$_nullObject,
         CRM_Utils_Hook::$_nullObject, CRM_Utils_Hook::$_nullObject, 'civicrm_qrcodecheckin_tokenValues');
   }
 

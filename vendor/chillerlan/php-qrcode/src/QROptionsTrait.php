@@ -12,7 +12,7 @@
 
 namespace chillerlan\QRCode;
 
-use chillerlan\QRCode\Data\QRMatrix;
+use function array_values, count, in_array, is_array, is_numeric, max, min, sprintf, strtolower;
 
 trait QROptionsTrait{
 
@@ -55,7 +55,7 @@ trait QROptionsTrait{
 	/**
 	 * Mask Pattern to use
 	 *
-	 *  [0...7] or QRCode::MASK_PATTERN_AUTO
+	 *   [0...7] or QRCode::MASK_PATTERN_AUTO
 	 *
 	 * @var int
 	 */
@@ -69,13 +69,23 @@ trait QROptionsTrait{
 	protected $addQuietzone = true;
 
 	/**
-	 *  Size of the quiet zone
+	 * Size of the quiet zone
 	 *
 	 *   internally clamped to [0 ... $moduleCount / 2], defaults to 4 modules
 	 *
 	 * @var int
 	 */
 	protected $quietzoneSize = 4;
+
+	/**
+	 * Use this to circumvent the data mode detection and force the usage of the given mode.
+	 * valid modes are: Number, AlphaNum, Kanji, Byte
+	 *
+	 * @see https://github.com/chillerlan/php-qrcode/issues/39
+	 *
+	 * @var string|null
+	 */
+	protected $dataMode = null;
 
 	/**
 	 * QRCode::OUTPUT_MARKUP_XXXX where XXXX = HTML, SVG
@@ -90,16 +100,16 @@ trait QROptionsTrait{
 	/**
 	 * the FQCN of the custom QROutputInterface if $outputType is set to QRCode::OUTPUT_CUSTOM
 	 *
-	 * @var string
+	 * @var string|null
 	 */
-	protected $outputInterface;
+	protected $outputInterface = null;
 
 	/**
 	 * /path/to/cache.file
 	 *
-	 * @var string
+	 * @var string|null
 	 */
-	protected $cachefile;
+	protected $cachefile = null;
 
 	/**
 	 * newline string [HTML, SVG, TEXT]
@@ -121,7 +131,7 @@ trait QROptionsTrait{
 	 *
 	 * @var string
 	 */
-	protected $cssClass;
+	protected $cssClass = '';
 
 	/**
 	 * SVG opacity
@@ -140,6 +150,17 @@ trait QROptionsTrait{
 	protected $svgDefs = '<style>rect{shape-rendering:crispEdges}</style>';
 
 	/**
+	 * SVG viewBox size. a single integer number which defines width/height of the viewBox attribute.
+	 *
+	 * viewBox="0 0 x x"
+	 *
+	 * @see https://css-tricks.com/scale-svg/#article-header-id-3
+	 *
+	 * @var int|null
+	 */
+	protected $svgViewBoxSize = null;
+
+	/**
 	 * string substitute for dark
 	 *
 	 * @var string
@@ -152,6 +173,36 @@ trait QROptionsTrait{
 	 * @var string
 	 */
 	protected $textLight = '⭕';
+
+	/**
+	 * markup substitute for dark (CSS value)
+	 *
+	 * @var string
+	 */
+	protected $markupDark = '#000';
+
+	/**
+	 * markup substitute for light (CSS value)
+	 *
+	 * @var string
+	 */
+	protected $markupLight = '#fff';
+
+	/**
+	 * Return the image resource instead of a render if applicable.
+	 * This option overrides other output options, such as $cachefile and $imageBase64.
+	 *
+	 * Supported by the following modules:
+	 *
+	 * - QRImage:   resource
+	 * - QRImagick: Imagick
+	 * - QRFpdf:    FPDF
+	 *
+	 * @see \chillerlan\QRCode\Output\QROutputInterface::dump()
+	 *
+	 * @var bool
+	 */
+	protected $returnResource = false;
 
 	/**
 	 * toggle base64 or raw image data
@@ -189,33 +240,169 @@ trait QROptionsTrait{
 	protected $jpegQuality = 85;
 
 	/**
+	 * Imagick output format
+	 *
+	 * @see Imagick::setType()
+	 *
+	 * @var string
+	 */
+	protected $imagickFormat = 'png';
+
+	/**
+	 * Imagick background color (defaults to "transparent")
+	 *
+	 * @see \ImagickPixel::__construct()
+	 *
+	 * @var string|null
+	 */
+	protected $imagickBG = null;
+
+	/**
+	 * Measurement unit for FPDF output: pt, mm, cm, in (defaults to "pt")
+	 *
+	 * @see \FPDF::__construct()
+	 */
+	protected $fpdfMeasureUnit = 'pt';
+
+	/**
 	 * Module values map
 	 *
-	 *   HTML : #ABCDEF, cssname, rgb(), rgba()...
+	 *   HTML, IMAGICK: #ABCDEF, cssname, rgb(), rgba()...
 	 *   IMAGE: [63, 127, 255] // R, G, B
 	 *
-	 * @var array
+	 * @var array|null
 	 */
-	protected $moduleValues = [
-		// light
-		QRMatrix::M_DATA            => false, // 4
-		QRMatrix::M_FINDER          => false, // 6
-		QRMatrix::M_SEPARATOR       => false, // 8
-		QRMatrix::M_ALIGNMENT       => false, // 10
-		QRMatrix::M_TIMING          => false, // 12
-		QRMatrix::M_FORMAT          => false, // 14
-		QRMatrix::M_VERSION         => false, // 16
-		QRMatrix::M_QUIETZONE       => false, // 18
-		QRMatrix::M_TEST            => false, // 255
-		// dark
-		QRMatrix::M_DARKMODULE << 8 => true,  // 512
-		QRMatrix::M_DATA << 8       => true,  // 1024
-		QRMatrix::M_FINDER << 8     => true,  // 1536
-		QRMatrix::M_ALIGNMENT << 8  => true,  // 2560
-		QRMatrix::M_TIMING << 8     => true,  // 3072
-		QRMatrix::M_FORMAT << 8     => true,  // 3584
-		QRMatrix::M_VERSION << 8    => true,  // 4096
-		QRMatrix::M_TEST << 8       => true,  // 65280
-	];
+	protected $moduleValues = null;
+
+	/**
+	 * clamp min/max version number
+	 *
+	 * @param int $versionMin
+	 * @param int $versionMax
+	 *
+	 * @return void
+	 */
+	protected function setMinMaxVersion(int $versionMin, int $versionMax):void{
+		$min = max(1, min(40, $versionMin));
+		$max = max(1, min(40, $versionMax));
+
+		$this->versionMin = min($min, $max);
+		$this->versionMax = max($min, $max);
+	}
+
+	/**
+	 * sets the minimum version number
+	 *
+	 * @param int $version
+	 *
+	 * @return void
+	 */
+	protected function set_versionMin(int $version):void{
+		$this->setMinMaxVersion($version, $this->versionMax);
+	}
+
+	/**
+	 * sets the maximum version number
+	 *
+	 * @param int $version
+	 *
+	 * @return void
+	 */
+	protected function set_versionMax(int $version):void{
+		$this->setMinMaxVersion($this->versionMin, $version);
+	}
+
+	/**
+	 * sets the error correction level
+	 *
+	 * @param int $eccLevel
+	 *
+	 * @return void
+	 * @throws \chillerlan\QRCode\QRCodeException
+	 */
+	protected function set_eccLevel(int $eccLevel):void{
+
+		if(!isset(QRCode::ECC_MODES[$eccLevel])){
+			throw new QRCodeException(sprintf('Invalid error correct level: %s', $eccLevel));
+		}
+
+		$this->eccLevel = $eccLevel;
+	}
+
+	/**
+	 * sets/clamps the mask pattern
+	 *
+	 * @param int $maskPattern
+	 *
+	 * @return void
+	 */
+	protected function set_maskPattern(int $maskPattern):void{
+
+		if($maskPattern !== QRCode::MASK_PATTERN_AUTO){
+			$this->maskPattern = max(0, min(7, $maskPattern));
+		}
+
+	}
+
+	/**
+	 * sets the transparency background color
+	 *
+	 * @param mixed $imageTransparencyBG
+	 *
+	 * @return void
+	 * @throws \chillerlan\QRCode\QRCodeException
+	 */
+	protected function set_imageTransparencyBG($imageTransparencyBG):void{
+
+		// invalid value - set to white as default
+		if(!is_array($imageTransparencyBG) || count($imageTransparencyBG) < 3){
+			$this->imageTransparencyBG = [255, 255, 255];
+
+			return;
+		}
+
+		foreach($imageTransparencyBG as $k => $v){
+
+			if(!is_numeric($v)){
+				throw new QRCodeException('Invalid RGB value.');
+			}
+
+			// clamp the values
+			$this->imageTransparencyBG[$k] = max(0, min(255, (int)$v));
+		}
+
+		// use the array values to not run into errors with the spread operator (...$arr)
+		$this->imageTransparencyBG = array_values($this->imageTransparencyBG);
+	}
+
+	/**
+	 * sets/clamps the version number
+	 *
+	 * @param int $version
+	 *
+	 * @return void
+	 */
+	protected function set_version(int $version):void{
+
+		if($version !== QRCode::VERSION_AUTO){
+			$this->version = max(1, min(40, $version));
+		}
+
+	}
+
+	/**
+	 * sets the FPDF measurement unit
+	 *
+	 * @codeCoverageIgnore
+	 */
+	protected function set_fpdfMeasureUnit(string $unit):void{
+		$unit = strtolower($unit);
+
+		if(in_array($unit, ['cm', 'in', 'mm', 'pt'], true)){
+			$this->fpdfMeasureUnit = $unit;
+		}
+
+		// @todo throw or ignore silently?
+	}
 
 }

@@ -36,10 +36,10 @@ function civicrm_api3_qrcodecheckin_Checkin($params) {
     throw new API_Exception('Please pass participant_id', 1);
   }
   
-  $get = array(
+  $get = [ 
     'id' => $params['participant_id'],
-  );
-  $returnValues = array();
+  ];
+  $returnValues = [];
   $result = civicrm_api3('Participant', 'get', $get);
   CRM_Core_Error::debug_var('result', $result);
   $values = array_pop($results['values']);

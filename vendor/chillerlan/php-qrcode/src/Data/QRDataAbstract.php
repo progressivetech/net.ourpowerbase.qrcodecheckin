@@ -12,20 +12,16 @@
 
 namespace chillerlan\QRCode\Data;
 
-use chillerlan\QRCode\{
-	QRCode, QRCodeException, QROptions
-};
-use chillerlan\QRCode\Helpers\{
-	BitBuffer, Polynomial
-};
-use chillerlan\Traits\ClassLoader;
-use chillerlan\Traits\ContainerInterface;
+use chillerlan\QRCode\{QRCode, QRCodeException};
+use chillerlan\QRCode\Helpers\{BitBuffer, Polynomial};
+use chillerlan\Settings\SettingsContainerInterface;
+
+use function array_fill, array_merge, count, max, mb_convert_encoding, mb_detect_encoding, range, sprintf, strlen;
 
 /**
  * Processes the binary data and maps it on a matrix which is then being returned
  */
 abstract class QRDataAbstract implements QRDataInterface{
-	use ClassLoader;
 
 	/**
 	 * the string byte count
@@ -89,10 +85,10 @@ abstract class QRDataAbstract implements QRDataInterface{
 	/**
 	 * QRDataInterface constructor.
 	 *
-	 * @param \chillerlan\Traits\ContainerInterface $options
-	 * @param string|null                           $data
+	 * @param \chillerlan\Settings\SettingsContainerInterface $options
+	 * @param string|null                                     $data
 	 */
-	public function __construct(ContainerInterface $options, string $data = null){
+	public function __construct(SettingsContainerInterface $options, string $data = null){
 		$this->options = $options;
 
 		if($data !== null){
@@ -101,11 +97,7 @@ abstract class QRDataAbstract implements QRDataInterface{
 	}
 
 	/**
-	 * Sets the data string (internally called by the constructor)
-	 *
-	 * @param string $data
-	 *
-	 * @return \chillerlan\QRCode\Data\QRDataInterface
+	 * @inheritDoc
 	 */
 	public function setData(string $data):QRDataInterface{
 
@@ -127,18 +119,10 @@ abstract class QRDataAbstract implements QRDataInterface{
 	}
 
 	/**
-	 * returns a fresh matrix object with the data written for the given $maskPattern
-	 *
-	 * @param int       $maskPattern
-	 * @param bool|null $test
-	 *
-	 * @return \chillerlan\QRCode\Data\QRMatrix
+	 * @inheritDoc
 	 */
 	public function initMatrix(int $maskPattern, bool $test = null):QRMatrix{
-		/** @var \chillerlan\QRCode\Data\QRMatrix $matrix */
-		$matrix = $this->loadClass(QRMatrix::class, null, $this->version, $this->options->eccLevel);
-
-		return $matrix
+		return (new QRMatrix($this->version, $this->options->eccLevel))
 			->setFinderPattern()
 			->setSeparators()
 			->setAlignmentPattern()
@@ -157,7 +141,7 @@ abstract class QRDataAbstract implements QRDataInterface{
 	 * @throws \chillerlan\QRCode\Data\QRCodeDataException
 	 * @codeCoverageIgnore
 	 */
-	protected function getLengthBits():int {
+	protected function getLengthBits():int{
 
 		 foreach([9, 26, 40] as $key => $breakpoint){
 			 if($this->version <= $breakpoint){
@@ -165,7 +149,7 @@ abstract class QRDataAbstract implements QRDataInterface{
 			 }
 		 }
 
-		throw new QRCodeDataException('invalid version number: '.$this->version);
+		throw new QRCodeDataException(sprintf('invalid version number: %d', $this->version));
 	}
 
 	/**
@@ -186,9 +170,10 @@ abstract class QRDataAbstract implements QRDataInterface{
 	 * @throws \chillerlan\QRCode\Data\QRCodeDataException
 	 */
 	protected function getMinimumVersion():int{
+		$maxlength = 0;
 
 		// guess the version number within the given range
-		foreach(range(max(1, $this->options->versionMin), min($this->options->versionMax, 40)) as $version){
+		foreach(range($this->options->versionMin, $this->options->versionMax) as $version){
 			$maxlength = $this::MAX_LENGTH[$version][QRCode::DATA_MODES[$this->datamode]][QRCode::ECC_MODES[$this->options->eccLevel]];
 
 			if($this->strlen <= $maxlength){
@@ -196,30 +181,31 @@ abstract class QRDataAbstract implements QRDataInterface{
 			}
 		}
 
-		throw new QRCodeDataException('data exceeds '.$maxlength.' characters');
+		throw new QRCodeDataException(sprintf('data exceeds %d characters', $maxlength));
 	}
 
 	/**
+	 * writes the actual data string to the BitBuffer
+	 *
 	 * @see \chillerlan\QRCode\Data\QRDataAbstract::writeBitBuffer()
 	 *
 	 * @param string $data
 	 *
 	 * @return void
 	 */
-	abstract protected function write(string $data);
+	abstract protected function write(string $data):void;
 
 	/**
-	 * writes the string data to the BitBuffer
+	 * creates a BitBuffer and writes the string data to it
 	 *
 	 * @param string $data
 	 *
 	 * @return \chillerlan\QRCode\Data\QRDataAbstract
 	 * @throws \chillerlan\QRCode\QRCodeException
 	 */
-	protected function writeBitBuffer(string $data):QRDataInterface {
+	protected function writeBitBuffer(string $data):QRDataInterface{
 		$this->bitBuffer = new BitBuffer;
 
-		// @todo: fixme, get real length
 		$MAX_BITS = $this::MAX_BITS[$this->version][QRCode::ECC_MODES[$this->options->eccLevel]];
 
 		$this->bitBuffer
@@ -232,7 +218,7 @@ abstract class QRDataAbstract implements QRDataInterface{
 
 		// there was an error writing the BitBuffer data, which is... unlikely.
 		if($this->bitBuffer->length > $MAX_BITS){
-			throw new QRCodeException('code length overflow. ('.$this->bitBuffer->length.' > '.$MAX_BITS.'bit)'); // @codeCoverageIgnore
+			throw new QRCodeException(sprintf('code length overflow. (%d > %d bit)', $this->bitBuffer->length, $MAX_BITS)); // @codeCoverageIgnore
 		}
 
 		// end code.
@@ -267,19 +253,17 @@ abstract class QRDataAbstract implements QRDataInterface{
 	/**
 	 * ECC masking
 	 *
-	 * @see \chillerlan\QRCode\Data\QRDataAbstract::writeBitBuffer()
-	 *
 	 * @link http://www.thonky.com/qr-code-tutorial/error-correction-coding
 	 *
 	 * @return array
 	 */
-	protected function maskECC():array {
-		list($l1, $l2, $b1, $b2) = $this::RSBLOCKS[$this->version][QRCode::ECC_MODES[$this->options->eccLevel]];
+	protected function maskECC():array{
+		[$l1, $l2, $b1, $b2] = $this::RSBLOCKS[$this->version][QRCode::ECC_MODES[$this->options->eccLevel]];
 
-		$rsBlocks       = array_fill(0, $l1, [$b1, $b2]);
-		$rsCount        = $l1 + $l2;
-		$this->ecdata   = array_fill(0, $rsCount, null);
-		$this->dcdata   = $this->ecdata;
+		$rsBlocks     = array_fill(0, $l1, [$b1, $b2]);
+		$rsCount      = $l1 + $l2;
+		$this->ecdata = array_fill(0, $rsCount, null);
+		$this->dcdata = $this->ecdata;
 
 		if($l2 > 0){
 			$rsBlocks = array_merge($rsBlocks, array_fill(0, $l2, [$b1 + 1, $b2 + 1]));
@@ -291,7 +275,7 @@ abstract class QRDataAbstract implements QRDataInterface{
 		$offset         = 0;
 
 		foreach($rsBlocks as $key => $block){
-			list($rsBlockTotal, $dcCount) = $block;
+			[$rsBlockTotal, $dcCount] = $block;
 
 			$ecCount            = $rsBlockTotal - $dcCount;
 			$maxDcCount         = max($maxDcCount, $dcCount);
@@ -302,7 +286,7 @@ abstract class QRDataAbstract implements QRDataInterface{
 				$this->dcdata[$key][$a] = 0xff & $this->bitBuffer->buffer[$a + $offset];
 			}
 
-			list($num, $add) = $this->poly($key, $ecCount);
+			[$num, $add] = $this->poly($key, $ecCount);
 
 			foreach($this->ecdata[$key] as $c => $_z){
 				$modIndex               = $c + $add;
