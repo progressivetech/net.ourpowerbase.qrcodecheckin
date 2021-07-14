@@ -1,3 +1,4 @@
+(function ($, ts){
 CRM.$('#qrcheckin-update-button').click(function() {
   var participant_id;
 
@@ -44,7 +45,8 @@ CRM.$('#qrcheckin-update-button').click(function() {
     }
     else {
       console.log(result);
-      alert("There was an error updating the status. Sorry.");
+      alert(ts("There was an error updating the status. Sorry."));
     }
   });
 });
+}(CRM.$, CRM.ts('net.ourpowerbase.qrcodecheckin')));

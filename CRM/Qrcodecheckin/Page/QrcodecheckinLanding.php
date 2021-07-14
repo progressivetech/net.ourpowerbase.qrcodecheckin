@@ -89,6 +89,6 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
   }
 
   private function refuseAccess() {
-    CRM_Core_Error::fatal(ts("Woops! The link you clicked on appears to be broken. Please check again and ensure it was not split by a line break.") );
+    CRM_Core_Error::fatal(E::ts("Woops! The link you clicked on appears to be broken. Please check again and ensure it was not split by a line break.") );
   }
 }
