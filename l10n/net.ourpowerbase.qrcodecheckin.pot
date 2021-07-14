@@ -1,0 +1,63 @@
+#: net.ourpowerbase.qrcodecheckin/CRM/Qrcodecheckin/Page/QrcodecheckinLanding.php
+msgid "QR Code Check-in page"
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/CRM/Qrcodecheckin/Page/QrcodecheckinLanding.php
+msgid "Woops! The link you clicked on appears to be broken. Please check again and ensure it was not split by a line break."
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/CRM/Qrcodecheckin/Upgrader/Base.php
+msgid "Upgrade %1 to revision %2"
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.js
+msgid "There was an error updating the status. Sorry."
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.js
+msgid "net.ourpowerbase.qrcodecheckin"
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.php
+msgid "Found directory in qrcodecheckin folder, I expected only QR code image files. I'm not deleting the folder. I am proceeding with uninstalling the extension."
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.php
+msgid "Enable QR Code tokens for this Event"
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.php
+msgid "QR Code Checkin"
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.php
+msgid "Access the page presented by the QR Code and click to change participant status to attended"
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.php
+msgid "QRCode link for event "
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.php
+msgid "QRCode image and link for event "
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.php
+msgid "<div><img alt=\"QR Code with link to checkin page\" src=\"%1\"></div><div>You should see a QR code above which will be used to quickly check you into the event. If you do not see a code display above, please enable the display of images in your email program or try accessing it <a href=\"%1\">directly</a>. You may want to take a screen grab of your QR Code in case you need to display it when you do not have Internet access.</div>"
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/templates/CRM/Qrcodecheckin/Page/QrcodecheckinLanding.tpl
+msgid "Congratulations! Your QR Code for checkin works. Please present your code to an event registration worker when you arrive."
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/templates/CRM/Qrcodecheckin/Page/QrcodecheckinLanding.tpl
+msgid "Update to Attended"
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/templates/qrcode-checkin-event-options.tpl
+msgid "If enabled, when sending email to contacts you can include a QR Checkin Code token for this event."
+msgstr ""
+
+#: net.ourpowerbase.qrcodecheckin/qrcodecheckin.js
+msgid "There was an error updating the status. Sorry."
+msgstr ""
