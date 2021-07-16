@@ -4,7 +4,7 @@
     <td>
       {$form.qrcode_enabled_event.html}
       {$form.qrcode_enabled_event.label}
-      <div class="help">{ts}If enabled, when sending email to contacts you can include a QR Checkin Code token for this event.{/ts}</div>
+      <div class="help">{ts domain="net.ourpowerbase.qrcodecheckin"}If enabled, when sending email to contacts you can include a QR Checkin Code token for this event.{/ts}</div>
     </td>
   </tr>
 </table>

@@ -54,7 +54,7 @@ function qrcodecheckin_civicrm_uninstall() {
     foreach ($files as $file) {
       if (is_dir("$dir/$file")) {
         // This is an error, but don't let it gum up the removal of the extension.
-        $msg = ts("Found directory in qrcodecheckin folder, I expected only QR code image files. I'm not deleting the folder. I am proceeding with uninstalling the extension.");
+        $msg = E::ts("Found directory in qrcodecheckin folder, I expected only QR code image files. I'm not deleting the folder. I am proceeding with uninstalling the extension.");
         CRM_Core_Error::debug_log_message($msg);
         $session = CRM_Core_Session::singleton();
         $session->setStatus($msg);
@@ -171,7 +171,7 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
     if (CRM_Utils_Request::retrieve('snippet', 'String', $form) == 'json') {
       $templatePath = realpath(dirname(__FILE__)."/templates");
       // Add the field element in the form
-      $form->add('checkbox', 'qrcode_enabled_event', ts('Enable QR Code tokens for this Event'));
+      $form->add('checkbox', 'qrcode_enabled_event', E::ts('Enable QR Code tokens for this Event'));
       // dynamically insert a template block in the page
       CRM_Core_Region::instance('page-body')->add([
         'template' => "{$templatePath}/qrcode-checkin-event-options.tpl"
@@ -311,10 +311,10 @@ function qrcodecheckin_delete_image($code) {
  * Implements hook_civicrm_permission(&$permissions)
  */
 function qrcodecheckin_civicrm_permission(&$permissions) {
-  $prefix = ts('QR Code Checkin') . ': ';
+  $prefix = E::ts('QR Code Checkin') . ': ';
   $permissions[QRCODECHECKIN_PERM] = [
-    $prefix . ts(QRCODECHECKIN_PERM),
-    ts('Access the page presented by the QR Code and click to change participant status to attended'),
+    $prefix . E::ts(QRCODECHECKIN_PERM),
+    E::ts('Access the page presented by the QR Code and click to change participant status to attended'),
   ];
 }
 
@@ -336,8 +336,8 @@ function qrcodecheckin_civicrm_tokens(&$tokens) {
     ->execute();
   $customTokens = [];
   foreach ($events as $event) {
-    $customTokens['qrcodecheckin.qrcode_url_' . $event['id']] = ts('QRCode link for event ' . $event['title']);
-    $customTokens['qrcodecheckin.qrcode_html_' . $event['id']] = ts('QRCode image and link for event ' . $event['title']);
+    $customTokens['qrcodecheckin.qrcode_url_' . $event['id']] = E::ts('QRCode link for event ') . $event['title'];
+    $customTokens['qrcodecheckin.qrcode_html_' . $event['id']] = E::ts('QRCode image and link for event ') . $event['title'];
   }
   $tokens['qrcodecheckin'] = $customTokens;
 }
@@ -374,14 +374,9 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
           $link = qrcodecheckin_get_image_url($code); 
   
           $values[$contact_id]['qrcodecheckin.qrcode_url_' . $event_id] = $link;
-          $values[$contact_id]['qrcodecheckin.qrcode_html_' . $event_id] = '<div>' .
-            '<img alt="QR Code with link to checkin page" src="' . $link .
-            '"></div><div>You should see a QR code above which will be used '.
-            'to quickly check you into the event. If you do not see a code '.
-            'display above, please enable the display of images in your email '.
-            'program or try accessing it <a href="' . $link . '">directly</a>. '.
-            'You may want to take a screen grab of your QR Code in case you need '.
-            'to display it when you do not have Internet access.</div>';
+          $values[$contact_id]['qrcodecheckin.qrcode_html_' . $event_id] = E::ts('<div><img alt="QR Code with link to checkin page" src="%1"></div><div>You should see a QR code above which will be used to quickly check you into the event. If you do not see a code display above, please enable the display of images in your email program or try accessing it <a href="%1">directly</a>. You may want to take a screen grab of your QR Code in case you need to display it when you do not have Internet access.</div>', [
+            1 => $link,
+          ]);
         }
       }
     }
