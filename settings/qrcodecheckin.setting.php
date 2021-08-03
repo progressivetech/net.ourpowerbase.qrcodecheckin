@@ -4,6 +4,8 @@
  * Settings used by qrcodecheckin.
  */
 
+use CRM_Qrcodecheckin_ExtensionUtil as E;
+
 return [
   'qrcode_events' => [
     'group_name' => 'QR Code Checkin',
@@ -15,7 +17,7 @@ return [
     'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'The events that will use QRCodes for a given contact (can be more than one event).',
-    'help_text' => 'If enabled, when sending email to contacts you can include a QR Checkin Code token for this event.',
+    'description' => E::ts('The events that will use QRCodes for a given contact (can be more than one event).'),
+    'help_text' => E::ts('If enabled, when sending email to contacts you can include a QR Checkin Code token for this event.'),
 	],
 ];

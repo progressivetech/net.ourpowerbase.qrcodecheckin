@@ -48,7 +48,7 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
   private function verifyHash() {
     $expected_hash = qrcodecheckin_get_code($this->participant_id);
     if ($expected_hash != $this->hash) {
-      CRM_Core_Error::debug_log_message("Qrcodecheckin: denied access, hash mis-match for participant id: " . $this->participant_id);
+      CRM_Core_Error::debug_log_message(E::ts("Qrcodecheckin: denied access, hash mis-match for participant id: %1", [ 1 =>  $this->participant_id]));
       return FALSE;
     }
     return TRUE;
