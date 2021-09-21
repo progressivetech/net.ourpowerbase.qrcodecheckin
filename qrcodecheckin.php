@@ -245,7 +245,7 @@ function qrcodecheckin_get_code($participant_id) {
 function qrcodecheckin_get_url($code, $participant_id) {
   $query = NULL;
   $absolute = TRUE;
-  return CRM_Utils_System::url('civicrm/qrcodecheckin/' . $participant_id . '/' . $code, $query, $absolute);
+  return CRM_Utils_System::url('civicrm/qrcodecheckin/' . $participant_id . '/' . $code, $query, $absolute, NULL, TRUE, TRUE);
 }
 
 /**
