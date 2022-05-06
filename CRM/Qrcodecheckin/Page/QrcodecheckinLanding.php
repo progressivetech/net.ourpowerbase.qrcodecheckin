@@ -67,7 +67,8 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
     $this->assign('participant_status', $dao->participant_status);
     $this->assign('fee_level', $dao->fee_level);
     $this->assign('fee_amount', $dao->fee_amount);
-    $this->assign('role_id', $dao->role_id);
+    $roles = CRM_Core_PseudoConstant::get('CRM_Event_DAO_Participant', 'role_id');
+    $this->assign('role', $roles[$dao->role_id]);
 
 
     if ($dao->participant_status == 'Registered') {
