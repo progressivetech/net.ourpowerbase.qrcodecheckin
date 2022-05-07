@@ -12,6 +12,7 @@
   <div id="qrcheckin-status-line" class="{$status_class}">Current Status: <span id="qrcheckin-status">{$participant_status}</span></div>
   <div id="qrcheckin-fee-level-line">Fee Level: {$fee_level}</div>
   <div id="qrcheckin-fee-amount-line">Fee Amount: {$fee_amount}</div>
+  <div id="qrcheckin-role">Role ID: {$role}</div>
 
   { if $update_button }
   <button id="qrcheckin-update-button">{ts domain="net.ourpowerbase.qrcodecheckin"}Update to Attended{/ts}</button>
