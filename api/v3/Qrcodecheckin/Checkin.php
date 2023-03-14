@@ -44,6 +44,6 @@ function civicrm_api3_qrcodecheckin_Checkin($params) {
   $values = array_pop($result['values']);
   $values['status_id'] = 'Attended';
   $values['id'] = $result['id'];
-  $returnValues = civicrm_api3('Participant', 'update', $values);
+  $returnValues = civicrm_api3('Participant', 'create', $values);
   return civicrm_api3_create_success($returnValues);
 }
