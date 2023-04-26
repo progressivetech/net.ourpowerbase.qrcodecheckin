@@ -6,7 +6,14 @@ CRM.$('#qrcheckin-update-button').click(function() {
   // We expect: /civicrm/qrcodecheckin/123/blahblahhash
   // We want: 123
   var reg_drupal = /\/qrcodecheckin\/([0-9]+)\//
-  var match = reg_drupal.exec(window.location.pathname);
+  var path_name = window.location.pathname;
+  
+  // Slashes are being converted to %3A in Drupal.
+  // Replace the %3A back to a slash so we can 
+  // get the participant_id from the path.
+  var sanitized_path_name = path_name.replace('%3A', '/');
+
+  var match = reg_drupal.exec(sanitized_path_name);
   if (match) {
     participant_id = match[1];
   }
