@@ -31,19 +31,15 @@ function civicrm_api3_qrcodecheckin_Checkin($params) {
   if (!CRM_Core_Permission::check(QRCODECHECKIN_PERM) && !CRM_Core_Permission::check('edit event participants')) {
     throw new API_Exception('You do not have the proper permissions to do this.', 1);
   }
-  
+
   if (!array_key_exists('participant_id', $params)) {
     throw new API_Exception('Please pass participant_id', 1);
   }
-  
-  $get = [ 
-    'id' => $params['participant_id'],
-  ];
-  $returnValues = [];
-  $result = civicrm_api3('Participant', 'get', $get);
-  $values = array_pop($result['values']);
-  $values['status_id'] = 'Attended';
-  $values['id'] = $result['id'];
-  $returnValues = civicrm_api3('Participant', 'create', $values);
+
+  $returnValues = \Civi\Api4\Participant::update(FALSE)
+    ->addValue('id', $params['participant_id'])
+    ->addValue('status_id:name', 'Attended')
+    ->execute();
+
   return civicrm_api3_create_success($returnValues);
 }
