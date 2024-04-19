@@ -14,8 +14,8 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
     $path = CRM_Utils_Array::value($config->userFrameworkURLVar, $_GET);
     // Get everything after /qrcodecheckin/
     if (preg_match('#/qrcodecheckin/([0-9]+)/([0-9a-f]+)$#', $path, $matches)) {
-      $this->participant_id = $matches[1]; 
-      $this->hash = $matches[2]; 
+      $this->participant_id = $matches[1];
+      $this->hash = $matches[2];
     }
 
     // If we don't have both, refuseAccess with message saying URL might be broken.
@@ -55,7 +55,7 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
   }
 
   private function setDetails() {
-    $sql = "SELECT title, display_name, st.name as participant_status, fee_level, fee_amount, role_id FROM civicrm_contact c 
+    $sql = "SELECT title, display_name, st.name as participant_status, fee_level, fee_amount, role_id FROM civicrm_contact c
         JOIN civicrm_participant p ON c.id = p.contact_id
         JOIN civicrm_event e ON e.id = p.event_id
         JOIN civicrm_participant_status_type st ON st.id = p.status_id
