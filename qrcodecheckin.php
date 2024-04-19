@@ -14,30 +14,12 @@ function qrcodecheckin_civicrm_config(&$config) {
 }
 
 /**
- * Implements hook_civicrm_xmlMenu().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_xmlMenu
- */
-function qrcodecheckin_civicrm_xmlMenu(&$files) {
-  _qrcodecheckin_civix_civicrm_xmlMenu($files);
-}
-
-/**
  * Implements hook_civicrm_install().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_install
  */
 function qrcodecheckin_civicrm_install() {
   _qrcodecheckin_civix_civicrm_install();
-}
-
-/**
- * Implements hook_civicrm_postInstall().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_postInstall
- */
-function qrcodecheckin_civicrm_postInstall() {
-  _qrcodecheckin_civix_civicrm_postInstall();
 }
 
 /**
@@ -64,7 +46,6 @@ function qrcodecheckin_civicrm_uninstall() {
     }
     mkdir($civiConfig->imageUploadDir . '/qrcodecheckin/');
   }
-  _qrcodecheckin_civix_civicrm_uninstall();
 }
 
 /**
@@ -78,85 +59,7 @@ function qrcodecheckin_civicrm_enable() {
   if (!file_exists($civiConfig->imageUploadDir . '/qrcodecheckin/')) {
     mkdir($civiConfig->imageUploadDir . '/qrcodecheckin/');
   }
-
    _qrcodecheckin_civix_civicrm_enable();
-}
-
-/**
- * Implements hook_civicrm_disable().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_disable
- */
-function qrcodecheckin_civicrm_disable() {
-  _qrcodecheckin_civix_civicrm_disable();
-}
-
-/**
- * Implements hook_civicrm_upgrade().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_upgrade
- */
-function qrcodecheckin_civicrm_upgrade($op, CRM_Queue_Queue $queue = NULL) {
-  return _qrcodecheckin_civix_civicrm_upgrade($op, $queue);
-}
-
-/**
- * Implements hook_civicrm_managed().
- *
- * Generate a list of entities to create/deactivate/delete when this module
- * is installed, disabled, uninstalled.
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_managed
- */
-function qrcodecheckin_civicrm_managed(&$entities) {
-  _qrcodecheckin_civix_civicrm_managed($entities);
-}
-
-/**
- * Implements hook_civicrm_caseTypes().
- *
- * Generate a list of case-types.
- *
- * Note: This hook only runs in CiviCRM 4.4+.
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_caseTypes
- */
-function qrcodecheckin_civicrm_caseTypes(&$caseTypes) {
-  _qrcodecheckin_civix_civicrm_caseTypes($caseTypes);
-}
-
-/**
- * Implements hook_civicrm_angularModules().
- *
- * Generate a list of Angular modules.
- *
- * Note: This hook only runs in CiviCRM 4.5+. It may
- * use features only available in v4.6+.
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_angularModules
- */
-function qrcodecheckin_civicrm_angularModules(&$angularModules) {
-  _qrcodecheckin_civix_civicrm_angularModules($angularModules);
-}
-
-/**
- * Implements hook_civicrm_alterSettingsFolders().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_alterSettingsFolders
- */
-function qrcodecheckin_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
-  _qrcodecheckin_civix_civicrm_alterSettingsFolders($metaDataFolders);
-}
-
-/**
- * Implements hook_civicrm_entityTypes().
- *
- * Declare entity types provided by this module.
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_entityTypes
- */
-function qrcodecheckin_civicrm_entityTypes(&$entityTypes) {
-  _qrcodecheckin_civix_civicrm_entityTypes($entityTypes);
 }
 
 /**
@@ -219,7 +122,6 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
   }
 }
 
-
 /**
  * Create a hash based on the participant id.
  */
@@ -268,7 +170,7 @@ function qrcodecheckin_get_image_data($url, $base64 = TRUE) {
 
 /**
  * Helper to return absolute URL to qrcode image file.
- * 
+ *
  * This is the URL to the image file containing the QR code.
  */
 function qrcodecheckin_get_image_url($code) {
@@ -278,7 +180,7 @@ function qrcodecheckin_get_image_url($code) {
 
 /**
  * Helper to return absolute file system path to qrcode image file.
- * 
+ *
  * This is the path to the image file containing the QR code.
  */
 function qrcodecheckin_get_path($code) {
@@ -374,8 +276,8 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
           // Get the absolute link to the image that will display the QR code.
           $query = NULL;
           $absolute = TRUE;
-          $link = qrcodecheckin_get_image_url($code); 
-  
+          $link = qrcodecheckin_get_image_url($code);
+
           $values[$contact_id]['qrcodecheckin.qrcode_url_' . $event_id] = $link;
           $values[$contact_id]['qrcodecheckin.qrcode_html_' . $event_id] = E::ts('<div><img alt="QR Code with link to checkin page" src="%1"></div><div>You should see a QR code above which will be used to quickly check you into the event. If you do not see a code display above, please enable the display of images in your email program or try accessing it <a href="%1">directly</a>. You may want to take a screen grab of your QR Code in case you need to display it when you do not have Internet access.</div>', [
             1 => $link,
@@ -391,7 +293,7 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
  */
 function qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id) {
 
-  $sql = "SELECT p.id FROM civicrm_contact c JOIN civicrm_participant p 
+  $sql = "SELECT p.id FROM civicrm_contact c JOIN civicrm_participant p
     ON c.id = p.contact_id WHERE c.is_deleted = 0 AND c.id = %0 AND p.event_id = %1";
   $params = [
     0 => [$contact_id, 'Integer'],
