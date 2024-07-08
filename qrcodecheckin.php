@@ -218,8 +218,8 @@ function qrcodecheckin_delete_image($code) {
 function qrcodecheckin_civicrm_permission(&$permissions) {
   $prefix = E::ts('QR Code Checkin') . ': ';
   $permissions[QRCODECHECKIN_PERM] = [
-    $prefix . E::ts(QRCODECHECKIN_PERM),
-    E::ts('Access the page presented by the QR Code and click to change participant status to attended'),
+    'label' => $prefix . E::ts(QRCODECHECKIN_PERM),
+    'description' => E::ts('Access the page presented by the QR Code and click to change participant status to attended'),
   ];
 }
 
