@@ -18,6 +18,8 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
       $this->hash = $matches[2];
     }
 
+    Civi::resources()->addVars('qrcodecheckin', ['participant_id' => $this->participant_id]);
+
     // If we don't have both, refuseAccess with message saying URL might be broken.
     if (empty($this->participant_id) || empty($this->hash)) {
       $this->refuseAccess();
