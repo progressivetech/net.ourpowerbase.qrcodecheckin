@@ -1,6 +1,7 @@
 <?php
 
 require_once 'qrcodecheckin.civix.php';
+use Civi\Api4\Participant;
 use CRM_Qrcodecheckin_ExtensionUtil as E;
 
 define('QRCODECHECKIN_PERM', 'check-in participants via qrcode');
@@ -199,6 +200,10 @@ function qrcodecheckin_create_image($code, $participant_id) {
     $base64 = FALSE;
     $data = qrcodecheckin_get_image_data($url, $base64);
     file_put_contents($path, $data);
+    Participant::update(FALSE)
+      ->addValue('QRCode.QRCode_Public_link', qrcodecheckin_get_image_url($qrcodeValues['filename']))
+      ->addWhere('id', '=', $participant_id)
+      ->execute();
   }
 }
 
