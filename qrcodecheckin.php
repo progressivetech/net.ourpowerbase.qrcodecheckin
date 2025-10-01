@@ -176,7 +176,7 @@ function qrcodecheckin_get_image_data($url, $base64 = TRUE) {
  */
 function qrcodecheckin_get_image_url($code) {
   $civiConfig = CRM_Core_Config::singleton();
-  return $civiConfig->imageUploadURL . '/qrcodecheckin/' . $code . '.png';
+  return CRM_Utils_File::addTrailingSlash($civiConfig->imageUploadURL) . 'qrcodecheckin/' . $code . '.png';
 }
 
 /**
@@ -186,7 +186,7 @@ function qrcodecheckin_get_image_url($code) {
  */
 function qrcodecheckin_get_path($code) {
   $civiConfig = CRM_Core_Config::singleton();
-  return $civiConfig->imageUploadDir . '/qrcodecheckin/' . $code . '.png';
+  return CRM_Utils_File::addTrailingSlash($civiConfig->imageUploadDir) . 'qrcodecheckin/' . $code . '.png';
 }
 
 /**
