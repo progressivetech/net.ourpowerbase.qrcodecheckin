@@ -14,11 +14,11 @@
     <url desc="Support">https://github.com/progressivetech/net.ourpowerbase.qrcodecheckin/issues</url>
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
   </urls>
-  <releaseDate>2024-04-19</releaseDate>
-  <version>2.1.4</version>
+  <releaseDate>2025-10-07</releaseDate>
+  <version>2.2.0</version>
   <develStage>stable</develStage>
   <compatibility>
-    <ver>5.81</ver>
+    <ver>6.4</ver>
   </compatibility>
   <civix>
     <namespace>CRM/Qrcodecheckin</namespace>

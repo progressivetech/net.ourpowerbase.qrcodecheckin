@@ -96,8 +96,8 @@ function myextension_civicrm_qrcodecheckin_tokenValues(&$values, $contact_id, &$
 
 ## Requirements
 
-* PHP v7.2+
-* CiviCRM 5 
+* PHP v8.2+
+* CiviCRM 6 
 
 ## Installation (Web UI)
 
