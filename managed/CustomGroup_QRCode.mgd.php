@@ -1,5 +1,5 @@
 <?php
-use CRM_K2bQrcode_ExtensionUtil as E;
+use CRM_Qrcodecheckin_ExtensionUtil as E;
 
 return [
   [
