@@ -11,7 +11,7 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
 
     // Now, try to get the participant_id and hash from the URL.
     $config = CRM_Core_Config::singleton();
-    $path = CRM_Utils_Array::value($config->userFrameworkURLVar, $_GET);
+    $path = $_GET[$config->userFrameworkURLVar] ?? NULL;
     // Get everything after /qrcodecheckin/
     if (preg_match('#/qrcodecheckin/([0-9]+)/([0-9a-f]+)$#', $path, $matches)) {
       $this->participant_id = $matches[1];
