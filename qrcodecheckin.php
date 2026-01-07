@@ -76,12 +76,14 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
       $templatePath = realpath(dirname(__FILE__)."/templates");
       // Add the field element in the form
       $form->add('checkbox', 'qrcode_enabled_event', E::ts('Enable QR Code tokens for this Event'));
+      $form->add('checkbox', 'qrcode_confirmation_event', E::ts('Add QR Code to confirmation emails'));
       // dynamically insert a template block in the page
       CRM_Core_Region::instance('page-body')->add([
         'template' => "{$templatePath}/qrcode-checkin-event-options.tpl"
       ]);
 
       $qrcode_events = \Civi::settings()->get('qrcode_events');
+      $qrcode_confirmation_events = \Civi::settings()->get('qrcode_confirmation_events') ?? [];
       $event_id = intval($form->getVar('_id'));
       if (in_array($event_id, $qrcode_events)) {
         $defaults['qrcode_enabled_event'] = 1;
@@ -89,6 +91,7 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
       else {
         $defaults['qrcode_enabled_event'] = 0;
       }
+      $defaults['qrcode_confirmation_event'] = in_array($event_id, $qrcode_confirmation_events) ? 1 : 0;
       $form->setDefaults($defaults);
     }
   }
@@ -105,6 +108,7 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
     $vals = $form->_submitValues;
     $event_id = intval($form->getVar('_id'));
     $qrcode_enabled_event = array_key_exists('qrcode_enabled_event', $vals) ? TRUE : FALSE;
+    $qrcode_confirmation_event = array_key_exists('qrcode_confirmation_event', $vals) ? TRUE : FALSE;
 
     // Add/Remove event ID to/from array of QR-enabled events as required
     $qrcode_events = \Civi::settings()->get('qrcode_events');
@@ -119,6 +123,20 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
       // Remove event ID from array
       $qrcode_events = array_diff($qrcode_events, [$event_id]);
       \Civi::settings()->set('qrcode_events', $qrcode_events);
+    }
+
+    $qrcode_confirmation_events = \Civi::settings()->get('qrcode_confirmation_events') ?? [];
+    if ($qrcode_confirmation_event) {
+      // Add event ID to array of QR-enabled
+      if (!in_array($event_id, $qrcode_confirmation_events)) {
+        $qrcode_confirmation_events[] = $event_id;
+        \Civi::settings()->set('qrcode_confirmation_events', $qrcode_confirmation_events);
+      }
+    }
+    else if (in_array($event_id, $qrcode_confirmation_events)) {
+      // Remove event ID from array
+      $qrcode_confirmation_events = array_diff($qrcode_confirmation_events, [$event_id]);
+      \Civi::settings()->set('qrcode_confirmation_events', $qrcode_confirmation_events);
     }
   }
 }
@@ -201,7 +219,7 @@ function qrcodecheckin_create_image($code, $participant_id) {
     $data = qrcodecheckin_get_image_data($url, $base64);
     file_put_contents($path, $data);
     Participant::update(FALSE)
-      ->addValue('QRCode.QRCode_Public_link', qrcodecheckin_get_image_url($qrcodeValues['filename']))
+      ->addValue('QRCode.QRCode_Public_link', qrcodecheckin_get_image_url($path))
       ->addWhere('id', '=', $participant_id)
       ->execute();
   }
@@ -279,8 +297,6 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
           qrcodecheckin_create_image($code, $participant_id);
 
           // Get the absolute link to the image that will display the QR code.
-          $query = NULL;
-          $absolute = TRUE;
           $link = qrcodecheckin_get_image_url($code);
 
           $values[$contact_id]['qrcodecheckin.qrcode_url_' . $event_id] = $link;
