@@ -15,15 +15,16 @@ The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 ## Usage
 
-Once enabled, each event configuration screen will have a new checkbox underneath the existing "Is this Event Active?" checkbox:
+Once enabled, each event configuration screen will have two new checkboxes underneath the existing "Is this Event Active?" checkbox:
 
 ![Checkbox to enable QR Code checkin for this event](/images/qrcode-event-configuration.png)
 
-This setting can be set on any number of events at a time.
+**Add QR Code to confirmation emails**, **Enable QR Code tokens for this event**
+The first option will automatically add the QR code to receipt emails. The second option adds a token to the token browser, which can be inserted into a mailing.
 
-After setting the checkbox for your event, search for all contacts that are registered for the event and place them in a group.
+These settings can be set on any number of events at a time.
 
-Then, send an email to the group, that includes the QR Code image token. There will be a token for each QR Code-enabled event that:
+If tokens are enabled, there will be a token for each QR Code-enabled event that:
 
  * is set to active
  * allows online registration
@@ -63,7 +64,7 @@ If they have any other status, it will be displayed in red:
 
 ## Tokens
 
-Tokens are generated for each event configured to use QR Codes. There are two tokens per event you can use:
+If enabled, tokens are generated for each event configured to use QR Codes. There are two tokens per event you can use:
 * qrcodecheckin.qrcode_html_<eventID> - An HTML block to embed into your email containing the QRCode image and supporting text.
 * qrcodecheckin.qrcode_url_<eventID> - contains the direct URL to the QRCode image on the server.
 
