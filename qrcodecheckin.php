@@ -310,6 +310,22 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
 }
 
 /**
+ * Implements hook_civicrm_navigationMenu().
+ *
+ * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_navigationMenu/
+ */
+function qrcodecheckin_civicrm_navigationMenu(&$menu) {
+    _qrcodecheckin_civix_insert_navigation_menu($menu, 'Administer/CiviEvent', [
+        'label' => E::ts('QR Code Checkin Settings'),
+        'name' => 'qrcodecheckin_settings',
+        'url' => CRM_Utils_System::url('civicrm/admin/setting/qrcode', ['reset' => TRUE]),
+        'permission' => 'administer CiviCRM',
+        'operator' => 'OR',
+        'separator' => 0,
+    ]);
+}
+
+/**
  * Fetch participant_id from contact_id
  */
 function qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id) {

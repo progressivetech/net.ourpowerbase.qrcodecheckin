@@ -6,4 +6,10 @@
     <title>QrcodecheckinLanding</title>
     <access_arguments>register for events</access_arguments>
   </item>
+  <item>
+    <path>civicrm/admin/setting/qrcode</path>
+    <title>QR Code Checkin Settings</title>
+    <page_callback>CRM_Admin_Form_Generic</page_callback>
+    <access_arguments>administer CiviCRM</access_arguments>
+  </item>
 </menu>

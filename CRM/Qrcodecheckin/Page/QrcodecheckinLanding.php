@@ -72,8 +72,19 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
     $roles = CRM_Core_PseudoConstant::get('CRM_Event_DAO_Participant', 'role_id');
     $this->assign('role', $roles[$dao->role_id]);
 
-    if ($dao->participant_status == 'Registered') {
-      $this->assign('update_button', TRUE);
+    if ($dao->participant_status === 'Registered') {
+      $scanAction = \Civi::settings()->get('qrcode_scan_action');
+      if ($scanAction !== 'autoupdate') {
+        $this->assign('update_button', TRUE);
+      }
+      else {
+        $this->assign('update_button', FALSE);
+        \Civi\Api4\Participant::update(FALSE)
+          ->addWhere('id', '=', $this->participant_id)
+          ->addValue('status_id:name', 'Attended')
+          ->execute();
+      }
+      $this->assign('participant_status', "Was $dao->participant_status, now Attended");
       $this->assign('status_class', 'qrcheckin-status-registered');
     }
     elseif ($dao->participant_status == 'Attended') {
