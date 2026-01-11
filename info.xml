@@ -30,6 +30,7 @@
     <mixin>mgd-php@1.0.0</mixin>
     <mixin>smarty@1.0.3</mixin>
     <mixin>scan-classes@1.0.0</mixin>
+    <mixin>setting-admin@1.0.1</mixin>
   </mixins>
   <classloader>
     <psr0 prefix="CRM_" path="."/>
