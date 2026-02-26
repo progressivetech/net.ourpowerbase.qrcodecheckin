@@ -14,7 +14,13 @@ With one click, the registration worker can change their status from registered 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 ## Setup
-After enabling, go to **Administer » CiviEvent » QR Code Checkin Settings**. Configure the behavior for what occurs when a QR code is scanned.  *Show Button* will provide an "Update to Attended" button.  *Automatically Check In* will update the participant status to "Attended" without further input.
+After enabling, go to **Administer » CiviEvent » QR Code Checkin Settings**:
+
+**QR Code Scan Action**
+Configure the behavior for what occurs when a QR code is scanned.  *Show Button* will provide an "Update to Attended" button.  *Automatically Check In* will update the participant status to "Attended" without further input.
+
+**Send all QR codes in one email**
+If *Register Multiple Participants* is enabled on the event, enable this setting to send all QR codes in the email of the main participant.
 
 ## Usage
 
