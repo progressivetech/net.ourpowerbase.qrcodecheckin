@@ -12,6 +12,8 @@ define('QRCODECHECKIN_PERM', 'check-in participants via qrcode');
  */
 function qrcodecheckin_civicrm_config(&$config) {
   _qrcodecheckin_civix_civicrm_config($config);
+  Civi::dispatcher()->addListener('civi.token.list', 'qrcodecheckin_register_tokens');
+  Civi::dispatcher()->addListener('civi.token.eval', 'qrcodecheckin_evaluate_tokens');
 }
 
 /**
@@ -247,9 +249,9 @@ function qrcodecheckin_civicrm_permission(&$permissions) {
 }
 
 /**
- * Implements hook_civicrm_tokens.
+ * Register the QR code tokens.
  */
-function qrcodecheckin_civicrm_tokens(&$tokens) {
+function qrcodecheckin_register_tokens(\Civi\Token\Event\TokenRegisterEvent $e): void {
   $qrcode_events = \Civi::settings()->get('qrcode_events');
   if (empty($qrcode_events)) {
     return;
@@ -262,33 +264,32 @@ function qrcodecheckin_civicrm_tokens(&$tokens) {
     ->addWhere('id', 'IN', $qrcode_events)
     ->setLimit(0)
     ->execute();
-  $customTokens = [];
   foreach ($events as $event) {
-    $customTokens['qrcodecheckin.qrcode_url_' . $event['id']] = E::ts('QRCode link for event ') . $event['title'];
-    $customTokens['qrcodecheckin.qrcode_html_' . $event['id']] = E::ts('QRCode image and link for event ') . $event['title'];
+    $e->entity('qrcodecheckin')
+      ->register('qrcodecheckin.qrcode_url_' . $event['id'], E::ts('QRCode link for event ') . $event['title'])
+      ->register('qrcode_html_' . $event['id'], E::ts('QRCode image and link for event ') . $event['title']);
   }
-  $tokens['qrcodecheckin'] = $customTokens;
+
 }
 
+
 /**
- * Implements hook_civicrm_tokenValues.
+ * Evaluate the QR code tokens.
  */
-function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens = [], $context = null) {
+function qrcodecheckin_evaluate_tokens(\Civi\Token\Event\TokenValueEvent $e) {
+  $tokens = $e->getTokenProcessor()->getMessageTokens();
   if (array_key_exists('qrcodecheckin', $tokens)) {
-    $tokens['qrcodecheckin'];
     $event_ids = [];
     foreach ($tokens['qrcodecheckin'] as $token) {
       $event_ids[] = preg_replace('/\D/', '', $token);
     }
-    foreach($cids as $contact_id) {
-      // Allow token values to be overridden by extensions
-      $handled = FALSE;
-      CRM_Qrcodecheckin_Hook::tokenValues($values[$contact_id], $contact_id, $handled);
-      if ($handled) {
-        // Hook processed the qrcode tokens for us
+    foreach ($e->getRows() as $row) {
+      // FIXME: We should eventually expose these as participant tokens.
+      if (empty($row->context['contactId'])) {
         continue;
       }
-
+      $row->format('text/html');
+      $contact_id = $row->context['contactId'];
       foreach ($event_ids as $event_id) {
         $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id);
         if ($participant_id) {
@@ -298,11 +299,10 @@ function qrcodecheckin_civicrm_tokenValues(&$values, $cids, $job = null, $tokens
 
           // Get the absolute link to the image that will display the QR code.
           $link = qrcodecheckin_get_image_url($code);
-
-          $values[$contact_id]['qrcodecheckin.qrcode_url_' . $event_id] = $link;
-          $values[$contact_id]['qrcodecheckin.qrcode_html_' . $event_id] = E::ts('<div><img alt="QR Code with link to checkin page" src="%1"></div><div>You should see a QR code above which will be used to quickly check you into the event. If you do not see a code display above, please enable the display of images in your email program or try accessing it <a href="%1">directly</a>. You may want to take a screen grab of your QR Code in case you need to display it when you do not have Internet access.</div>', [
+          $row->tokens('qrcodecheckin', 'qrcode_url_' . $event_id, $link);
+          $row->tokens('qrcodecheckin', 'qrcode_html_' . $event_id, E::ts('<div><img alt="QR Code with link to checkin page" src="%1"></div><div>You should see a QR code above which will be used to quickly check you into the event. If you do not see a code display above, please enable the display of images in your email program or try accessing it <a href="%1">directly</a>. You may want to take a screen grab of your QR Code in case you need to display it when you do not have Internet access.</div>', [
             1 => $link,
-          ]);
+          ]));
         }
       }
     }
