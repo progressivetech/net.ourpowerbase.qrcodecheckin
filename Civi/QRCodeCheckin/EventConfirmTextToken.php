@@ -34,15 +34,12 @@ class EventConfirmTextToken extends AutoService implements EventSubscriberInterf
     }
 
     foreach ($e->getRows() as $rowNum => $row) {
-      $participantId = $row->tokenProcessor->context['participantId'];
-      $code = qrcodecheckin_get_code($participantId);
-      // First ensure the image file is created.
-      qrcodecheckin_create_image($code, $participantId);
-
-      // Get the absolute link to the image that will display the QR code.
-      $link = qrcodecheckin_get_image_url($code);
-
-      $html = E::ts('<p><img alt="QR Code with link to checkin page" src="%1">You should see a QR code above which will be used to quickly check you into the event. If you do not see a code display above, please enable the display of images in your email program or try accessing it <a href="%1">directly</a>. You may want to take a screen grab of your QR Code in case you need to display it when you do not have Internet access.</p>', [1 => $link]);
+      $contactId = $row->context['contactId'] ?? $row->tokenProcessor->context['contactId'] ?? NULL;
+      $links = qrcodecheckin_get_qrcode_links($eventId, $contactId);
+      if (empty($links)) {
+        continue;
+      }
+      $html = qrcodecheckin_generate_url_token($links);
       $originalText = $row->tokenProcessor->rowValues[$rowNum]['text/html']['event']['confirm_email_text'] ?? '';
       $row->format('text/html')->tokens('event', 'confirm_email_text', $originalText . $html);
     }
