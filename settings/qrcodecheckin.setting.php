@@ -35,4 +35,20 @@ return [
       ],
     ],
   ],
+  'qrcode_multiple_participant_email' => [
+    'name' => 'qrcode_multiple_participant_email',
+    'title' => E::ts('Send all QR codes in one email'),
+    'type' => 'Boolean',
+    'html_type' => 'checkbox',
+    'default' => 'button',
+    'add' => '6.0',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'description' => E::ts('If a contact registers multiple participants, this will send the primary contact all the QR codes.'),
+    'settings_pages' => [
+      'qrcode' => [
+        'weight' => 20,
+      ],
+    ],
+  ],
 ];

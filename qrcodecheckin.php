@@ -272,6 +272,44 @@ function qrcodecheckin_register_tokens(\Civi\Token\Event\TokenRegisterEvent $e):
 
 }
 
+/**
+ * Build QR code image links for a contact/event or participant/event.
+ */
+function qrcodecheckin_get_qrcode_links($event_id, $contact_id = NULL): array {
+  $primary_participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id);
+  if (empty($primary_participant_id)) {
+    return [];
+  }
+
+  $participant_ids = [$primary_participant_id];
+  $multipleQR = \Civi::settings()->get('qrcode_multiple_participant_email');
+  if ($multipleQR) {
+    $addlParticipants = \Civi\Api4\Participant::get(FALSE)
+      ->addSelect('id')
+      ->addWhere('registered_by_id', '=', $primary_participant_id)
+      ->addWhere('event_id', '=', $event_id)
+      ->addWhere('is_test', 'IS NOT NULL')
+      ->execute()
+      ->column('id');
+    $participant_ids = array_merge($participant_ids, $addlParticipants);
+  }
+
+  // $participant_ids = array_values(array_unique(array_filter($participant_ids)));
+  $links = [];
+  foreach ($participant_ids as $pid) {
+    $code = qrcodecheckin_get_code($pid);
+    if (!$code) {
+      continue;
+    }
+    // First ensure the image file is created.
+    qrcodecheckin_create_image($code, $pid);
+
+    // Get the absolute link to the image that will display the QR code.
+    $links[] = qrcodecheckin_get_image_url($code);
+  }
+
+  return $links;
+}
 
 /**
  * Evaluate the QR code tokens.
@@ -280,31 +318,65 @@ function qrcodecheckin_evaluate_tokens(\Civi\Token\Event\TokenValueEvent $e) {
   $tokens = $e->getTokenProcessor()->getMessageTokens();
   if (array_key_exists('qrcodecheckin', $tokens)) {
     $event_ids = [];
+    // We need to catch all the event ID tokens, but if we qrcode_html_2 and qrcode_url_2 we don't evaluate event 2 twice.
     foreach ($tokens['qrcodecheckin'] as $token) {
-      $event_ids[] = preg_replace('/\D/', '', $token);
+      $eventId = preg_replace('/\D/', '', $token);
+      $event_ids[$eventId] = $eventId;
     }
     foreach ($e->getRows() as $row) {
       // FIXME: We should eventually expose these as participant tokens.
       if (empty($row->context['contactId'])) {
         continue;
       }
-      $row->format('text/html');
       $contact_id = $row->context['contactId'];
       foreach ($event_ids as $event_id) {
-        $participant_id = qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id);
-        if ($participant_id) {
-          $code = qrcodecheckin_get_code($participant_id);
-          // First ensure the image file is created.
-          qrcodecheckin_create_image($code, $participant_id);
-
-          // Get the absolute link to the image that will display the QR code.
-          $link = qrcodecheckin_get_image_url($code);
-          $row->tokens('qrcodecheckin', 'qrcode_url_' . $event_id, $link);
-          $row->tokens('qrcodecheckin', 'qrcode_html_' . $event_id, E::ts('<div><img alt="QR Code with link to checkin page" src="%1"></div><div>You should see a QR code above which will be used to quickly check you into the event. If you do not see a code display above, please enable the display of images in your email program or try accessing it <a href="%1">directly</a>. You may want to take a screen grab of your QR Code in case you need to display it when you do not have Internet access.</div>', [
-            1 => $link,
-          ]));
-        }
+        $links = qrcodecheckin_get_qrcode_links($event_id, $contact_id);
+        $row->format('text/plain')->tokens('qrcodecheckin', 'qrcode_url_' . $event_id, implode('\n', $links));
+        $row->format('text/html')->tokens('qrcodecheckin', 'qrcode_url_' . $event_id, implode('<br />', $links));
+        $urlToken = !empty($links) ? qrcodecheckin_generate_url_token($links) : '';
+        $row->tokens('qrcodecheckin', 'qrcode_html_' . $event_id, $urlToken);
       }
+    }
+  }
+}
+
+/**
+ * Generate a token that can be used in the email template to display the QR code image and link.
+ *
+ */
+function qrcodecheckin_generate_url_token(array $links): string {
+  $html = '';
+  foreach ($links as $link) {
+    $html .= '<div>';
+    $html .= '<img alt="' . E::ts('QR Code with link to checkin page') . '" src="' . $link . '"/>';
+    $html .= '</div>' . "\n";
+  }
+  if (count($links) > 1) {
+    $html .= '<div>' . E::ts('You have multiple registrations for this event. Each QR code above corresponds to a different registration. If you do not see codes displayed above, please enable the display of images in your email program or try accessing them directly (links below). You may want to take a screen grab of your QR Codes in case you need to display them when you do not have Internet access.') . '</div>';
+    foreach ($links as $key => $link) {
+      $html .= '<div><a href="' . $link . '">' . E::ts('QR code #%1', [1 => $key + 1]) . '</a></div>' . "\n";
+    }
+  }
+  else {
+    $html .= '<div>' . E::ts('You should see a QR code above which will be used to quickly check you into the event. If you do not see a code displayed above, please enable the display of images in your email program or try accessing it <a href="%1">directly</a>. You may want to take a screen grab of your QR Code in case you need to display it when you do not have Internet access.', [
+      1 => $link,
+    ]) . '</div>' . "\n";
+  }
+
+  return $html;
+}
+
+/**
+ * If sending all QR codes to the primary registrant, don't send emails to the other registrants.
+ */
+function qrcodecheckin_civicrm_alterMailParams(&$params, $context) {
+  if (($params['workflow'] ?? '') !== 'event_online_receipt') {
+    return;
+  }
+  if ($params["tokenContext"]["participant"]["registered_by_id"] ?? FALSE) {
+    $qrcode_multiple_participant_email = \Civi::settings()->get('qrcode_multiple_participant_email');
+    if ($qrcode_multiple_participant_email) {
+      $params['abortMailSend'] = TRUE;
     }
   }
 }
