@@ -143,6 +143,12 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
   }
 }
 
+function qrcodecheckin_civicrm_alterAPIPermissions($entity, $action, $params, &$permissions) {
+  $permissions['qrcodecheckin'] = [
+    'checkin' => [QRCODECHECKIN_PERM, 'edit event participants'],
+  ];
+}
+
 /**
  * Create a hash based on the participant id.
  */
