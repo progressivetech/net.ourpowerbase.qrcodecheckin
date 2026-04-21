@@ -227,7 +227,7 @@ function qrcodecheckin_create_image($code, $participant_id) {
     $data = qrcodecheckin_get_image_data($url, $base64);
     file_put_contents($path, $data);
     Participant::update(FALSE)
-      ->addValue('QRCode.QRCode_Public_link', qrcodecheckin_get_image_url($path))
+      ->addValue('QRCode.QRCode_Public_link', qrcodecheckin_get_image_url($code))
       ->addWhere('id', '=', $participant_id)
       ->execute();
   }
