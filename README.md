@@ -45,15 +45,14 @@ Recipients will get an email that includes the QR Code as an embedded image:
 
 ![User's view of the QR Code in their email](/images/qrcode-view-email.png)
 
-Now onto the event... At the event, be sure to have all registration workers download a QR Code scanner to their phones (there are plenty of free scanners available for Android, [here's one called QR Code Reader](https://play.google.com/store/apps/details?id=me.scan.android.client&hl=en) and on the iPhone it is built into the camera - so no extra software necessary).
+Now onto the event... At the event, be sure to have all registration workers have a functioning QR Code scanner on their phones (modern iPhones and Android phones should have one built into the camera - so no extra software necessary).
 
 Next, the registration worker should login to CiviCRM on their phones.
 
 Since registration workers are often volunteers who should not have full access to your CiviCRM installation, you can create a role for them that must minimally have the following permissions:
 
- * administer CiviCRM (yes, this is a big one, but without additional permissions there is not a lot they can do with it)
- * access AJAX API
  * check-in participants via qrcode (this permission is provided by the extension)
+ * edit event participants
 
 When a registration worker scans a QR Code, they will see a web address and be given the option to open it in their web browser.
 
@@ -93,7 +92,7 @@ When composing your email the tokens are searchable by your event's name (you do
 
 ## Changing contents of QRCode / Tokens
 
-If you wish to override the values of the qrcode tokens / change the contents of the QR Code you can implement 
+If you wish to override the values of the qrcode tokens / change the contents of the QR Code you can implement
 `hook_civicrm_qrcodecheckin_tokenValues`. You'll need to iterate through an array of possible tokens as they are dynamically
 determined by virtue of the events that have QR support enabled.
 
@@ -119,7 +118,7 @@ function myextension_civicrm_qrcodecheckin_tokenValues(&$values, $contact_id, &$
 ## Requirements
 
 * PHP v8.2+
-* CiviCRM 6 
+* CiviCRM 6
 
 ## Installation (Web UI)
 
