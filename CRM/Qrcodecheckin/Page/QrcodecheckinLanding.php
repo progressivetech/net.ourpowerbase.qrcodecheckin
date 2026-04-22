@@ -65,7 +65,7 @@ class CRM_Qrcodecheckin_Page_QrcodecheckinLanding extends CRM_Core_Page {
     $this->assign('event_title', $details['event_id.title']);
     $this->assign('display_name', $details['contact_id.display_name']);
     $this->assign('participant_status', $details['status_id:label']);
-    $this->assign('fee_level', implode(', ', $details['fee_level']));
+    $this->assign('fee_level', implode(', ', $details['fee_level'] ?? []));
     $this->assign('fee_amount', $details['fee_amount']);
     $this->assign('role', implode(', ', $details['role_id:label']));
     // Embed afforms. Permission check is false because we're already blocking anonymous users from this function.
