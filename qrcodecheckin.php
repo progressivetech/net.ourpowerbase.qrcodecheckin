@@ -437,14 +437,17 @@ function qrcodecheckin_civicrm_navigationMenu(&$menu) {
  * Fetch participant_id from contact_id
  */
 function qrcodecheckin_participant_id_for_contact_id($contact_id, $event_id) {
-
-  $sql = "SELECT p.id FROM civicrm_contact c JOIN civicrm_participant p
+  try {
+    $sql = "SELECT p.id FROM civicrm_contact c JOIN civicrm_participant p
     ON c.id = p.contact_id WHERE c.is_deleted = 0 AND c.id = %0 AND p.event_id = %1";
-  $params = [
-    0 => [$contact_id, 'Integer'],
-    1 => [$event_id, 'Integer']
-  ];
-  $dao = CRM_Core_DAO::executeQuery($sql, $params);
+    $params = [
+      0 => [$contact_id, 'Integer'],
+      1 => [$event_id, 'Integer']
+    ];
+    $dao = CRM_Core_DAO::executeQuery($sql, $params);
+  } catch (Throwable $e) {
+    \Civi::log()->error('qrcodecheckin_participant_id_for_contact_id: ' . $e->getMessage());
+  }
   if ($dao->N == 0) {
     return NULL;
   }
