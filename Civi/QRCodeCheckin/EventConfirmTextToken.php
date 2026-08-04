@@ -12,7 +12,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 
 class EventConfirmTextToken extends AutoService implements EventSubscriberInterface {
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       'civi.token.eval' => ['addQrCodetoEventConfirmText', -100],
     ];
