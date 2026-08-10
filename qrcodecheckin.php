@@ -84,7 +84,7 @@ function qrcodecheckin_civicrm_buildForm($formName, &$form) {
         'template' => "{$templatePath}/qrcode-checkin-event-options.tpl"
       ]);
 
-      $qrcode_events = \Civi::settings()->get('qrcode_events');
+      $qrcode_events = \Civi::settings()->get('qrcode_events') ?? [];
       $qrcode_confirmation_events = \Civi::settings()->get('qrcode_confirmation_events') ?? [];
       $event_id = intval($form->getVar('_id'));
       if (in_array($event_id, $qrcode_events)) {
@@ -113,7 +113,7 @@ function qrcodecheckin_civicrm_postProcess($formName, &$form) {
     $qrcode_confirmation_event = array_key_exists('qrcode_confirmation_event', $vals) ? TRUE : FALSE;
 
     // Add/Remove event ID to/from array of QR-enabled events as required
-    $qrcode_events = \Civi::settings()->get('qrcode_events');
+    $qrcode_events = \Civi::settings()->get('qrcode_events') ?? [];
     if ($qrcode_enabled_event) {
       // Add event ID to array of QR-enabled
       if (!in_array($event_id, $qrcode_events)) {
