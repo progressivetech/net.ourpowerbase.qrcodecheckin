@@ -42,7 +42,7 @@ class api_v3_Qrcodecheckin_CheckinTest extends \CivixPhar\PHPUnit\Framework\Test
    * Note how the function name begins with the word "test".
    */
   public function testApiExample() {
-    $result = civicrm_api3('Qrcodecheckin', 'Checkin', array('magicword' => 'sesame'));
+    $result = civicrm_api3('Qrcodecheckin', 'Checkin', ['magicword' => 'sesame']);
     $this->assertEquals('Twelve', $result['values'][12]['name']);
   }
 
